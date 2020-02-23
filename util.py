@@ -1,7 +1,21 @@
 import csv
 import math
-
+import re
 import constants as cs
+import numpy as np
+from scipy.stats import percentileofscore
+
+
+# Too much of the data is dirty often times, this function gets the first number in a string, and returns it
+# If there is no number, or it's NULL, it returns a 0
+def get_num(input_text):
+    """Returns the first number in a string."""
+
+    list_of_nums = re.findall(r'\d+', input_text)
+    if len(list_of_nums) == 0:
+        return 0
+    else:
+        return list_of_nums[0]
 
 
 def generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict):
@@ -14,9 +28,11 @@ def generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict):
         d_reader = csv.DictReader(f)
         for line in d_reader:
             student_type = line[cs.questions['student_type']]
-            ACT_SAT_value = line[cs.questions['ACT_SAT_value']]
-            ACTM_SATM_value = line[cs.questions['ACTM_SATM_value']]
-            if student_type == cs.high_scooler:
+
+            ACT_SAT_value = get_num(line[cs.questions['ACT_SAT_value']])
+            ACTM_SATM_value = get_num(line[cs.questions['ACTM_SATM_value']])
+
+            if cs.high_scooler in student_type.upper():
                 ACT_score = ACT_SAT_Conv(ACT_SAT_value, SAT_to_ACT_dict)
                 # Don't want to add the error values into our histogram and frankly only worth considering those which meet our mininum
                 if ACT_score > 21:
@@ -26,6 +42,22 @@ def generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict):
                 if ACTM_Score > 21:
                     ACTM_Overall.append(ACTM_Score)
     return ACT_Overall, ACTM_Overall
+
+
+def get_past_recipients(file):
+    recipient_list = []
+
+    with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
+        # get fieldnames from DictReader object and store in list
+        d_reader = csv.DictReader(f)
+        for line in d_reader:
+            lastName = line[cs.questions['lastName']]
+            firstName = line[cs.questions['firstName']]
+            recipient_list.append(lastName.strip().upper() + firstName.strip().upper())
+    return recipient_list
+
+
+
 
 
 def conversion_dict(file_name):
@@ -48,10 +80,7 @@ def conversion_dict(file_name):
 
 
 def GPA_Calc(value):
-    if not value:
-        GPA = 0
-    else:
-        GPA = float(value)
+    GPA = float(value)
 
     # If over 4 assume out of 5.0 scale, if over 5.0 assume 6.0
     if math.ceil(GPA) == 5:
@@ -73,10 +102,7 @@ def GPA_Calc(value):
 # Source: https://www.act.org/content/dam/act/unsecured/documents/ACT-SAT-Concordance-Tables.pdf
 
 def ACT_SAT_Conv(score, conv_dict):
-    if not score:
-        score = 0
-    else:
-        score = int(score)
+    score = int(score)
 
     # Sanity checks for min/max scores
     if 36 < score < cs.min_SAT:
@@ -92,26 +118,79 @@ def ACT_SAT_Conv(score, conv_dict):
     return score
 
 
-def ACT_SAT_Calc(value, conv_dict):
+def ACT_SAT_Calc(value, conv_dict, total_score, histogram):
     ACT_SAT = ACT_SAT_Conv(value, conv_dict)
 
-    # TODO: Determine percentiles
-    if ACT_SAT <= 36:
-        ACT_SAT -= 21
-        ACT_SAT_Score = max(ACT_SAT, 0)
+    if ACT_SAT == 36:  # Special case to give a few extra bonus fractions to perfect scores
+        return total_score
     else:
-        ACT_SAT_Score = 0
+        return total_score * percentileofscore(histogram, ACT_SAT) / 100
 
-    return ACT_SAT_Score
+
+def class_split(classes):
+    classes = classes.replace(':', '')
+
+    classes = classes.replace('w/', 'with')
+    classes = classes.replace(' and ', ' & ')
+    classes = classes.replace('Adv.', 'Advanced')
+    classes = classes.replace('Trigonometry', 'Trig')
+
+    classes = classes.replace('A.P.', 'AP')
+    classes = classes.replace(' AP', ',AP')
+    classes = classes.replace(' AP', ',AP')
+    classes = classes.replace(' A.P.', ',AP')
+    classes = classes.replace(' Ap ', ',AP ')
+
+    classes = classes.replace(' IB', ',IB')
+
+    classes = classes.replace(' Honors', ',Honors')
+    classes = classes.replace(' Honor', ',Honors')
+    classes = classes.replace(' HS', ',Honors')
+    classes = classes.replace(' HS1', ',Honors')
+    classes = classes.replace('Honors1', 'Honors')
+    classes = classes.replace(' H ', ',Honors ')
+    classes = classes.replace(' H-', ',Honors')
+    classes = classes.replace(' (Honors)', ',Honors')
+    classes = classes.replace(' (H)', ',Honors')
+
+
+    classes = classes.replace(' Dual-Credit', ',Dual-Credit')
+    classes = classes.replace(' Dual Credit', ',Dual-Credit')
+
+    classes = classes.replace(' College Credit', ',College Credit')
+
+    classes = classes.replace('A.P.', 'AP')
+
+
+    classes = classes.replace(' I ', ' 1 ')
+    classes = classes.replace(' I,', ' 1,')
+    classes = classes.replace(' II ', ' 2 ')
+    classes = classes.replace(' II,', ' 2,')
+    classes = classes.replace(' III ', ' 3 ')
+    classes = classes.replace(' III,', ' 3,')
+    classes = classes.replace(' IV ', ' 4 ')
+    classes = classes.replace(' IV,', ' 4,')
+    classes = classes.replace(' V ', ' 5 ')
+    classes = classes.replace(' V,', ' 5,')
+    classes = classes.replace(' 1 ', ' 1,')
+    classes = classes.replace(' 2 ', ' 2,')
+    classes = classes.replace(' 3 ', ' 3,')
+    classes = classes.replace(' 4 ', ' 4,')
+    classes = classes.replace(' 5 ', ' 5,')
+
+    classes = classes.replace('. , ',',')
+    classes = classes.replace('.)', ',')
+    classes = classes.replace(' - ', ',')
+    classes = classes.replace(' -', ',')
+    classes = classes.replace(',,', ',')
+
+    class_list = classes.split(',')
+
+    return class_list
 
 
 def COMMS_calc(value):
-    if not value:
-        COMMS = 0
-    else:
-        COMMS = float(value)
-
-    COMMS_Score = 0
+    COMMS = float(value)
 
     if COMMS > 100:
         COMMS_Score = 5
@@ -123,5 +202,7 @@ def COMMS_calc(value):
         COMMS_Score = 2
     elif COMMS > 60:
         COMMS_Score = 1
+    else:
+        COMMS_Score = 0
 
     return COMMS_Score

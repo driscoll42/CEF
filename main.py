@@ -2,15 +2,24 @@ import csv
 
 import numpy as np
 from scipy.stats import percentileofscore
+import re
+import validations as vali
 
 import constants as cs
 import util
+import scoring_util as sutil
 
 
-# TODO: Add documentation for functions and such
-# TODO: Add gitignore with emails and passwords, student data
+class Student:
+    """A student class to track exceptions and values"""
+
+
+# TODO: Add documentation for functions and such, sphinx?
+# TODO: Add gitignore with emails and passwords, better secure them
 # TODO: Package numpy, scipy
 # TODO: Extract csv from AwardSpring automatically
+# TODO: Replace all csvs with Google Spreadsheets https://www.twilio.com/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html
+# TODO: Host this on an AWS server
 
 def compute_HS_scores(file):
     # Load the conversion factors into a dict to reduce the number of times we have to iterate over the files
@@ -20,10 +29,21 @@ def compute_HS_scores(file):
     # Iterate through file once to get data for histograms
     ACT_Overall, ACTM_Overall = util.generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict)
 
-    print("\n50th Percentile of arr, axis = None : ",
-          np.percentile(ACT_Overall, 50))
+    '''print('ACT')
+    for x in range(16):
+        print(np.percentile(ACT_Overall, float(x)/15 * 100), float(x)/15 * 100)
+    print('ACTM')
+
+    for x in range(11):
+        print(np.percentile(ACT_Overall, float(x)/10 * 100), float(x)/10 * 100)
     for x in reversed(range(22, 37)):
-        print(x, ACT_Overall.count(x), percentileofscore(ACT_Overall, x))
+        print(x, ACT_Overall.count(x), round(percentileofscore(ACT_Overall, x), 2))
+    print('ACTM')
+    for x in reversed(range(22, 37)):
+        print(x, ACTM_Overall.count(x), round(percentileofscore(ACTM_Overall, x), 2))'''
+
+    reviewer_scores = sutil.get_reviewer_scores('Reviewer Scores by Applicant for 2019 Incentive Awards.csv')
+
     with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         # get fieldnames from DictReader object and store in list
         d_reader = csv.DictReader(f)
@@ -39,83 +59,136 @@ def compute_HS_scores(file):
         if not all_q_exist:
             return
 
-        # TODO: Check submission status, if they have not submitted by filled everything out
+        unique_class = []
+        # TODO: Check submission status, if they have not submitted but filled everything out, autowarn?
         for line in d_reader:
             lastName = line[cs.questions['lastName']]
             firstName = line[cs.questions['firstName']]
-            GPA_Value = line[cs.questions['GPA_Value']]
-            ACT_SAT_value = line[cs.questions['ACT_SAT_value']]
-            ACTM_SATM_value = line[cs.questions['ACTM_SATM_value']]
-            COMMS_value = line[cs.questions['COMMS_value']]
+            GPA_Value = util.get_num(line[cs.questions['GPA_Value']])
+            ACT_SAT_value = util.get_num(line[cs.questions['ACT_SAT_value']])
+            ACTM_SATM_value = util.get_num(line[cs.questions['ACTM_SATM_value']])
+            COMMS_value = util.get_num(line[cs.questions['COMMS_value']])
             NON_ENG_value = line[cs.questions['NON_ENG_value']]
             student_type = line[cs.questions['student_type']]
-            # TODO: Add Warnings based on residency, use https://smartystreets.com/
-            # TODO: Add Distance and time between home and work
-            # TODO: API to pull in socio-economic data of home zip
-            # TODO: College accrediation check
-            # TODO: Coursework functionality
-            # TODO: Add high schools and unversities to AwardSpring
+            major = line['Major']
+            other_major = line[cs.questions['other_major']]
+            STEM_Classes = line[cs.questions['STEM_Classes']]
+            College = line[cs.questions['College']]
+            Other_College = line[cs.questions['Other_College']]
+
+            address1 = line[cs.questions['address1']]
+            address2 = line[cs.questions['address2']]
+            city = line[cs.questions['city']]
+            state = line[cs.questions['state']]
+            zip = line[cs.questions['zip']]
+            country = line[cs.questions['country']]
+
             # TODO: Overall error handling
-            # TODO: Check for completed but unsubmitted applications
-            if 0 == 1 and student_type == cs.high_scooler and GPA_Value and ACT_SAT_value and ACTM_SATM_value and COMMS_value:
+            accred_check = ''
+            ACT_SAT_Score_check = 0
+            # Do below for math too
+            '''if ACT_SAT_Score == -1:
+                print(ACT_SAT_value, 'No conversion factor exists for this score (is it a decmial?)')
+            elif ACT_SAT_Score == -2:
+                print(ACT_SAT_value, 'This score is too low for the SAT and too high for the ACT, check if correct')
+            elif ACT_SAT_Score == -3:
+                print(ACT_SAT_value, 'This score is too high for the SAT, check if correct')'''
+
+            # TODO: Add Distance and time between home and work
+            # TODO: Determine school quality
+            if 1 == 1 and cs.high_scooler in student_type.upper() and GPA_Value and ACT_SAT_value and ACTM_SATM_value and COMMS_value:
+                # Check address if residential or commercial
+                # Only have 250 free calls per month, commenting this out until needed
+                # address_type = vali.address_Validation(lastName, firstName, address1, address2, city, state, zip,country)
+                address_type = 'Residential'
+                if address_type != 'Residential':
+                    print('WARNING')
+                    print(address_type)
+
+                # Validation check for Accrediation of college
+                College = College.split(',')
+                Other_College = Other_College.split(',')
+                check = vali.accred_check(College, Other_College, major)
+                if not check:
+                    accred_check = [College, Other_College, major, other_major]
+
+                # TODO: Coursework functionality
+                classes = util.class_split(STEM_Classes)
+                '''for x in classes:
+                    if
+
+                    if x.strip() not in unique_class:
+                        unique_class.append(x.strip())'''
+
                 GPA_Score = util.GPA_Calc(GPA_Value)
-                ACT_SAT_Score = util.ACT_SAT_Calc(ACT_SAT_value, SAT_to_ACT_dict)
-                # TODO: Improve the error handling here
-                if ACT_SAT_Score == -1:
-                    print(ACT_SAT_value, 'No conversion factor exists for this score (is it a decmial?)')
-                elif ACT_SAT_Score == -2:
-                    print(ACT_SAT_value, 'This score is too low for the SAT and too high for the ACT, check if correct')
-                elif ACT_SAT_Score == -3:
-                    print(ACT_SAT_value, 'This score is too high for the SAT, check if correct')
-                ACTM_SATM_Score = util.ACT_SAT_Calc(ACTM_SATM_value, SAT_to_ACT_Math_dict)
-                # TODO: Improve the error handling here
-                if ACTM_SATM_Score == -1:
-                    print(ACTM_SATM_value, 'No conversion factor exists for this score (is it a decmial?)')
-                elif ACTM_SATM_Score == -2:
-                    print(ACTM_SATM_value,
-                          'This score is too low for the SAT and too high for the ACT, check if correct')
-                elif ACTM_SATM_Score == -3:
-                    print(ACTM_SATM_value, 'This score is too high for the SAT, check if correct')
+                ACT_SAT_Score = round(util.ACT_SAT_Calc(ACT_SAT_value, SAT_to_ACT_dict, 10, ACT_Overall), 2)
+                ACTM_SATM_Score = round(util.ACT_SAT_Calc(ACTM_SATM_value, SAT_to_ACT_Math_dict, 15, ACTM_Overall), 2)
                 COMMS_Score = util.COMMS_calc(COMMS_value)
-                if NON_ENG_value:
+                if major == 'Not listed' and NON_ENG_value:
                     print('Potential non-engineering major, check: ' + NON_ENG_value)
 
-                print(lastName + ', ' + firstName + ':', GPA_Score, ACT_SAT_Score, ACTM_SATM_Score, COMMS_Score)
+                if lastName.strip().upper() + firstName.strip().upper() in reviewer_scores:
+                    reviewer_score = 0.5 * round(reviewer_scores[lastName.strip().upper() + firstName.strip().upper()])
+                else:
+                    reviewer_score = 0
+
+                # print(lastName + ', ' + firstName + ':', GPA_Score, ACT_SAT_Score, ACTM_SATM_Score, COMMS_Score, reviewer_score)
+                # print(accred_check)
 
                 # TODO: Write back to Excel File or Google Spreadsheets
                 # TODO: Send email with new students and warnings
-        # TODO: Import reviewer scores and add the two together
+        unique_class.sort()
+        print(unique_class)
         # TODO: Normalize reviewer scores
 
 
 def compute_C_scores(file):
-    # TODO: Don't start this for a while for lessons learned from HS
-    # TODO: Check if past recipient
-    # TODO: Check if changed university/major
+    recipient_list = util.get_past_recipients('2019 Recipients.csv')
 
     with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         # get fieldnames from DictReader object and store in list
         d_reader = csv.DictReader(f)
+        headers = d_reader.fieldnames
+        print(headers)
+
+        all_q_exist = True
+        for q in cs.questions.values():
+            if q not in headers:
+                print('ERROR: The following question is not in the headers, check for typos:')
+                print(q)
+                all_q_exist = False
+        if not all_q_exist:
+            return
+
         for line in d_reader:
             student_type = line[cs.questions['student_type']]
             lastName = line[cs.questions['lastName']]
             firstName = line[cs.questions['firstName']]
             GPA_Value = line[cs.questions['GPA_Value']]
+            major_school_change = line[cs.questions['major_school_change']]
+            major = line['Major']
+            NON_ENG_value = line[cs.questions['NON_ENG_value']]
 
-            if student_type == cs.college_student:
+            if cs.high_scooler not in student_type.upper():
+                if lastName.strip().upper() + firstName.strip().upper() not in recipient_list:
+                    print('Student did not recieve award last year: ' + firstName + ' ' + lastName)
+
+            else:
                 if GPA_Value:
                     GPA_Value = float(GPA_Value)
                     if GPA_Value < 2.75:
                         print(lastName, firstName, 'GPA is below 2.75. GPA is ' + str(GPA_Value))
                     elif GPA_Value < 2.9:
                         print(lastName, firstName, 'GPA is below 2.9, consider warning. GPA is ' + str(GPA_Value))
-    return 0
+                if major_school_change and re.sub('[^A-Za-z0-9]+', '', major_school_change.strip().upper()) != 'NO':
+                    print('Major or School Change, investigate: ' + major_school_change)
+                if major == 'Not listed' and NON_ENG_value:
+                    print('Other Major Listed, validate it is engineering: ' + NON_ENG_value)
 
 
 def main():
-    filename = 'Student_Answers_2019.csv'
+    filename = 'Student Answers for 2019 Incentive Awards.csv'
     compute_HS_scores(filename)
-    # TODO: Finish compute_C_scores
     # compute_C_scores(filename)
 
 
