@@ -1,13 +1,10 @@
 import csv
-
-import numpy as np
-from scipy.stats import percentileofscore
 import re
-import validations as vali
 
 import constants as cs
-import util
 import scoring_util as sutil
+import util
+import validations as vali
 
 
 class Student:
@@ -19,7 +16,8 @@ class Student:
 # TODO: Package numpy, scipy
 # TODO: Extract csv from AwardSpring automatically
 # TODO: Replace all csvs with Google Spreadsheets https://www.twilio.com/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html
-# TODO: Host this on an AWS server
+# TODO: Host this on an AWS server ? https://realpython.com/python-sql-libraries/
+# TODO: Make the ACT/SAT/GPA question numeric questions
 
 def compute_HS_scores(file):
     # Load the conversion factors into a dict to reduce the number of times we have to iterate over the files
@@ -27,7 +25,7 @@ def compute_HS_scores(file):
     SAT_to_ACT_Math_dict = util.conversion_dict('SAT_to_ACT_Math.csv')
 
     # Iterate through file once to get data for histograms
-    ACT_Overall, ACTM_Overall = util.generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict)
+    ACT_Overall, ACTM_Overall = sutil.generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict)
 
     '''print('ACT')
     for x in range(16):
@@ -43,7 +41,7 @@ def compute_HS_scores(file):
         print(x, ACTM_Overall.count(x), round(percentileofscore(ACTM_Overall, x), 2))'''
 
     reviewer_scores = sutil.get_reviewer_scores('Reviewer Scores by Applicant for 2019 Incentive Awards.csv')
-
+    cnt = 0
     with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         # get fieldnames from DictReader object and store in list
         d_reader = csv.DictReader(f)
@@ -97,6 +95,7 @@ def compute_HS_scores(file):
             # TODO: Add Distance and time between home and work
             # TODO: Determine school quality
             if 1 == 1 and cs.high_scooler in student_type.upper() and GPA_Value and ACT_SAT_value and ACTM_SATM_value and COMMS_value:
+                cnt += 1
                 # Check address if residential or commercial
                 # Only have 250 free calls per month, commenting this out until needed
                 # address_type = vali.address_Validation(lastName, firstName, address1, address2, city, state, zip,country)
@@ -113,17 +112,17 @@ def compute_HS_scores(file):
                     accred_check = [College, Other_College, major, other_major]
 
                 # TODO: Coursework functionality
-                classes = util.class_split(STEM_Classes)
+                classes = sutil.class_split(STEM_Classes)
                 '''for x in classes:
                     if
 
                     if x.strip() not in unique_class:
                         unique_class.append(x.strip())'''
 
-                GPA_Score = util.GPA_Calc(GPA_Value)
-                ACT_SAT_Score = round(util.ACT_SAT_Calc(ACT_SAT_value, SAT_to_ACT_dict, 10, ACT_Overall), 2)
-                ACTM_SATM_Score = round(util.ACT_SAT_Calc(ACTM_SATM_value, SAT_to_ACT_Math_dict, 15, ACTM_Overall), 2)
-                COMMS_Score = util.COMMS_calc(COMMS_value)
+                GPA_Score = sutil.GPA_Calc(GPA_Value)
+                ACT_SAT_Score = round(sutil.ACT_SAT_Calc(ACT_SAT_value, SAT_to_ACT_dict, 10, ACT_Overall), 2)
+                ACTM_SATM_Score = round(sutil.ACT_SAT_Calc(ACTM_SATM_value, SAT_to_ACT_Math_dict, 15, ACTM_Overall), 2)
+                COMMS_Score = sutil.COMMS_calc(COMMS_value)
                 if major == 'Not listed' and NON_ENG_value:
                     print('Potential non-engineering major, check: ' + NON_ENG_value)
 
@@ -132,17 +131,19 @@ def compute_HS_scores(file):
                 else:
                     reviewer_score = 0
 
-                # print(lastName + ', ' + firstName + ':', GPA_Score, ACT_SAT_Score, ACTM_SATM_Score, COMMS_Score, reviewer_score)
-                # print(accred_check)
+                print(lastName + ', ' + firstName + ':', GPA_Score, ACT_SAT_Score, ACTM_SATM_Score, COMMS_Score,
+                      reviewer_score)
+                print(accred_check)
 
                 # TODO: Write back to Excel File or Google Spreadsheets
                 # TODO: Send email with new students and warnings
         unique_class.sort()
         print(unique_class)
+        print(cnt)
 
 
 def compute_C_scores(file):
-    recipient_list = util.get_past_recipients('2019 Recipients.csv')
+    recipient_list = vali.get_past_recipients('2019 Recipients.csv')
 
     with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         # get fieldnames from DictReader object and store in list
@@ -186,9 +187,9 @@ def compute_C_scores(file):
 
 
 def main():
-    filename = 'Student Answers for 2019 Incentive Awards.csv'
+    filename = 'Student Answers for 2020 Incentive Awards.csv'
     compute_HS_scores(filename)
-    # compute_C_scores(filename)
+    compute_C_scores(filename)
 
 
 main()

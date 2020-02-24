@@ -1,11 +1,10 @@
-import constants as cs
 import csv
-import keys as keys
-
-import os
 
 from smartystreets_python_sdk import StaticCredentials, exceptions, ClientBuilder
 from smartystreets_python_sdk.us_street import Lookup as StreetLookup
+
+import constants as cs
+import keys as keys
 
 
 # Source: https://smartystreets.com/docs/sdk/python
@@ -63,6 +62,7 @@ def accred_check(school_list, other_School, major):
     major = major.replace(' ', '')
     major = major.replace('ENGINEERING', '')
     major_list = major.split(',')
+    Accredited = False
 
     for school in school_list:
         school = school.upper()
@@ -72,7 +72,6 @@ def accred_check(school_list, other_School, major):
         school = school.replace('-', '')
         school = school.replace(' ', '')
 
-        Accredited = False
         with open('School_Data/ABET_Accredited_Schools.csv', 'r', encoding="utf-8-sig") as f:
             d_reader = csv.DictReader(f)
             headers = d_reader.fieldnames
@@ -104,7 +103,6 @@ def accred_check(school_list, other_School, major):
         school = school.replace('-', '')
         school = school.replace(' ', '')
 
-        Accredited = False
         with open('School_Data/ABET_Accredited_Schools.csv', 'r', encoding="utf-8-sig") as f:
             d_reader = csv.DictReader(f)
             headers = d_reader.fieldnames
@@ -129,3 +127,16 @@ def accred_check(school_list, other_School, major):
                             return True
 
     return Accredited
+
+
+def get_past_recipients(file):
+    recipient_list = []
+
+    with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
+        # get fieldnames from DictReader object and store in list
+        d_reader = csv.DictReader(f)
+        for line in d_reader:
+            lastName = line[cs.questions['lastName']]
+            firstName = line[cs.questions['firstName']]
+            recipient_list.append(lastName.strip().upper() + firstName.strip().upper())
+    return recipient_list
