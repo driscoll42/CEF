@@ -6,10 +6,10 @@ Website: https://www.chicagoengineersfoundation.org/
 
 ## High School Validation Features
 
-* Checks if the home address listed is a residential address or a business address
+* Checks if the home address listed is a residential address or a business address (uses USPS data)
 * Checks if the University + Major are ABET accredited. If the major is Undecided, just checks the University
 * Checks if the major is a non-engineering major 
-* Check if home address is not Chicago that the school is a Chicago High School (WIP)
+* Check if home address is not Chicago that the school is a Chicago High School
 * Check if student has filled out their application but not yet submitted it (WIP)
 
 ## College Validation Features

@@ -47,7 +47,7 @@ def address_Validation(lastName, firstName, address1, address2, city, state, zip
     result = lookup.result
 
     if not result:
-        print("No candidates. This means the address is not valid.")
+        # print("No candidates. This means the address is not valid.")
         return 'Invalid Address'
 
     first_candidate = result[0]
@@ -140,3 +140,13 @@ def get_past_recipients(file):
             firstName = line[cs.questions['firstName']]
             recipient_list.append(lastName.strip().upper() + firstName.strip().upper())
     return recipient_list
+
+
+def get_school_list(file):
+    school_list = {}
+    with open('School_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
+        d_reader = csv.DictReader(f)
+        for line in d_reader:
+            school_list[line['FacilityName'].upper()] = line['City'].upper()
+
+    return school_list

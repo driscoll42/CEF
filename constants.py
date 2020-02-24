@@ -21,7 +21,9 @@ questions = {'lastName': 'LastName',
              'city': 'City',
              'zip': 'Zip Code',
              'country': 'Country',
-             'state': 'State'
+             'state': 'State',
+             'high_school': 'What high school did you attend?',
+             'high_school_other': 'Name of your high school'
              }
 
 questions_2020 = {'lastName': 'LastName',
@@ -45,7 +47,7 @@ questions_2020 = {'lastName': 'LastName',
                   'zip': 'Zip Code',
                   'country': 'Country',
                   'state': 'State'
-             }
+                  }
 
 questions_2018 = {'lastName': 'LastName',
                   'firstName': 'FirstName',
@@ -81,6 +83,7 @@ max_SATM = 800
 
 # Various functions check for student types
 high_scooler = 'HIGH SCHOOL SENIOR'
+college_student = 'COLLEGE STUDENT'
 
 # ABET Constants
 abet_school_name = 'School Name'

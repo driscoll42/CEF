@@ -23,17 +23,12 @@ def compute_HS_scores(file):
     # Load the conversion factors into a dict to reduce the number of times we have to iterate over the files
     SAT_to_ACT_dict = util.conversion_dict('SAT_to_ACT.csv')
     SAT_to_ACT_Math_dict = util.conversion_dict('SAT_to_ACT_Math.csv')
+    school_list = vali.get_school_list('Illinois_Schools.csv')
 
     # Iterate through file once to get data for histograms
     ACT_Overall, ACTM_Overall = sutil.generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict)
 
     '''print('ACT')
-    for x in range(16):
-        print(np.percentile(ACT_Overall, float(x)/15 * 100), float(x)/15 * 100)
-    print('ACTM')
-
-    for x in range(11):
-        print(np.percentile(ACT_Overall, float(x)/10 * 100), float(x)/10 * 100)
     for x in reversed(range(22, 37)):
         print(x, ACT_Overall.count(x), round(percentileofscore(ACT_Overall, x), 2))
     print('ACTM')
@@ -73,6 +68,8 @@ def compute_HS_scores(file):
             STEM_Classes = line[cs.questions['STEM_Classes']]
             College = line[cs.questions['College']]
             Other_College = line[cs.questions['Other_College']]
+            high_school = line[cs.questions['high_school']]
+            high_school_other = line[cs.questions['high_school_other']]
 
             address1 = line[cs.questions['address1']]
             address2 = line[cs.questions['address2']]
@@ -100,9 +97,19 @@ def compute_HS_scores(file):
                 # Only have 250 free calls per month, commenting this out until needed
                 # address_type = vali.address_Validation(lastName, firstName, address1, address2, city, state, zip,country)
                 address_type = 'Residential'
-                if address_type != 'Residential':
-                    print('WARNING')
-                    print(address_type)
+
+                if address_type == 'Invalid Address':
+                    print(
+                        'WARNING - Applicant has entered an invalid address:  ' + address1 + ' ' + address2 + ' ' + city + ' ' + state + ' ' + zip)
+                elif address_type != 'Residential':
+                    print(
+                        'WARNING - Applicant has entered a non-residential address:  ' + address1 + ' ' + address2 + ' ' + city + ' ' + state + ' ' + zip)
+                elif address_type == 'Residential' and city.upper() != 'CHICAGO':
+                    school = high_school.upper()
+                    if high_school == 'My High School is Not Listed':
+                        school = high_school_other.upper()
+                    if school_list[school] != 'CHICAGO':
+                        print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
 
                 # Validation check for Accrediation of college
                 College = College.split(',')
@@ -149,7 +156,6 @@ def compute_C_scores(file):
         # get fieldnames from DictReader object and store in list
         d_reader = csv.DictReader(f)
         headers = d_reader.fieldnames
-        print(headers)
 
         all_q_exist = True
         for q in cs.questions.values():
@@ -169,21 +175,24 @@ def compute_C_scores(file):
             major = line['Major']
             NON_ENG_value = line[cs.questions['NON_ENG_value']]
 
-            if cs.high_scooler not in student_type.upper():
+            if cs.college_student in student_type.upper():
                 if lastName.strip().upper() + firstName.strip().upper() not in recipient_list:
-                    print('Student did not recieve award last year: ' + firstName + ' ' + lastName)
+                    # TODO: Implement Fuzzy Name Matching, use for schools and colleges as well
+                    print(firstName + ' ' + lastName + ': Student did not receive award last year')
 
-            else:
-                if GPA_Value:
-                    GPA_Value = float(GPA_Value)
-                    if GPA_Value < 2.75:
-                        print(lastName, firstName, 'GPA is below 2.75. GPA is ' + str(GPA_Value))
-                    elif GPA_Value < 2.9:
-                        print(lastName, firstName, 'GPA is below 2.9, consider warning. GPA is ' + str(GPA_Value))
-                if major_school_change and re.sub('[^A-Za-z0-9]+', '', major_school_change.strip().upper()) != 'NO':
-                    print('Major or School Change, investigate: ' + major_school_change)
-                if major == 'Not listed' and NON_ENG_value:
-                    print('Other Major Listed, validate it is engineering: ' + NON_ENG_value)
+                else:
+                    if GPA_Value:
+                        GPA_Value = float(GPA_Value)
+                        if GPA_Value < 2.75:
+                            print(lastName, firstName, 'GPA is below 2.75. GPA is ' + str(GPA_Value))
+                        elif GPA_Value < 2.9:
+                            print(lastName, firstName, 'GPA is below 2.9, consider warning. GPA is ' + str(GPA_Value))
+                    if major_school_change and re.sub('[^A-Za-z0-9]+', '', major_school_change.strip().upper()) != 'NO':
+                        print(
+                            firstName + ' ' + lastName + ': Major or School Change, investigate: ' + major_school_change)
+                    if major == 'Not listed' and NON_ENG_value:
+                        print(
+                            firstName + ' ' + lastName + ': Other Major Listed, validate it is engineering: ' + NON_ENG_value)
 
 
 def main():
