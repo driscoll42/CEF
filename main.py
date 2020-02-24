@@ -15,11 +15,11 @@ class Student:
 # TODO: Add gitignore with emails and passwords, better secure them
 # TODO: Package numpy, scipy
 # TODO: Extract csv from AwardSpring automatically
-# TODO: Replace all csvs with Google Spreadsheets https://www.twilio.com/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html
+# TODO: Replace all csvs with Google Spreadsheets https://www.twilio.tcom/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html
 # TODO: Host this on an AWS server ? https://realpython.com/python-sql-libraries/
 # TODO: Make the ACT/SAT/GPA question numeric questions
 
-def compute_HS_scores(file):
+def compute_HS_scores(file: str):
     # Load the conversion factors into a dict to reduce the number of times we have to iterate over the files
     SAT_to_ACT_dict = util.conversion_dict('SAT_to_ACT.csv')
     SAT_to_ACT_Math_dict = util.conversion_dict('SAT_to_ACT_Math.csv')
@@ -149,7 +149,7 @@ def compute_HS_scores(file):
         print(cnt)
 
 
-def compute_C_scores(file):
+def compute_C_scores(file: str):
     recipient_list = vali.get_past_recipients('2019 Recipients.csv')
 
     with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:

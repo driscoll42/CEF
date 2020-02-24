@@ -1,6 +1,7 @@
 import csv
 import math
 import statistics as stat
+from typing import Tuple
 
 import numpy as np
 from scipy.stats import percentileofscore
@@ -13,7 +14,7 @@ import util
 # For example if FirstName = John and LastName = Doe, then student1 = DoeJohn
 # Currently it works if a reviewer has a z score, for all students, greater or less than 1/-1 for all test students
 #
-def get_reviewer_scores_normalized(file, student1, student2, student3):
+def get_reviewer_scores_normalized(file: str, student1: str, student2: str, student3: str) -> dict:
     reviewer_list = []
     student1_dict = {}
     student1_arr = []
@@ -112,7 +113,7 @@ def get_reviewer_scores_normalized(file, student1, student2, student3):
 # print(get_reviewer_scores_normalized('NormalizeTest.csv', 'User 1Test', 'User 2Test',                                     'User 3Test'))
 
 
-def get_reviewer_scores(file):
+def get_reviewer_scores(file: str) -> float:
     reviewer_avg = {}
     student_cnt = {}
 
@@ -139,7 +140,7 @@ def get_reviewer_scores(file):
     return reviewer_avg
 
 
-def generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict):
+def generate_histo_arrays(file: str, SAT_to_ACT_dict: dict, SAT_to_ACT_Math_dict: dict) -> Tuple[list, list]:
     # Create arrays to store the total for each ACT score type to determine precentiles
     ACT_Overall = []
     ACTM_Overall = []
@@ -165,17 +166,15 @@ def generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict):
     return ACT_Overall, ACTM_Overall
 
 
-def GPA_Calc(value):
-    GPA = float(value)
-
+def GPA_Calc(gpa: float) -> float:
     # If over 4 assume out of 5.0 scale, if over 5.0 assume 6.0
-    if math.ceil(GPA) == 5:
-        GPA = 4.0 * GPA / 5.0
-    elif math.ceil(GPA) == 6:
-        GPA = 4.0 * GPA / 6.0
+    if math.ceil(gpa) == 5:
+        gpa = 4.0 * gpa / 5.0
+    elif math.ceil(gpa) == 6:
+        gpa = 4.0 * gpa / 6.0
 
     # 2.91 is worth 1 point and every 0.10 is an extra point up to 10 points
-    GPA_Score = GPA
+    GPA_Score = gpa
     GPA_Score -= 2.90
     GPA_Score = max(GPA_Score, 0)
     GPA_Score *= 10
@@ -187,9 +186,7 @@ def GPA_Calc(value):
 # It's easier to work in terms of ACT score and to convert everything to the same scale
 # Source: https://www.act.org/content/dam/act/unsecured/documents/ACT-SAT-Concordance-Tables.pdf
 
-def ACT_SAT_Conv(score, conv_dict):
-    score = int(score)
-
+def ACT_SAT_Conv(score: float, conv_dict: dict) -> int:
     # Sanity checks for min/max scores
     if 36 < score < cs.min_SAT:
         return -2
@@ -204,7 +201,7 @@ def ACT_SAT_Conv(score, conv_dict):
     return score
 
 
-def ACT_SAT_Calc(value, conv_dict, total_score, histogram):
+def ACT_SAT_Calc(value: float, conv_dict: dict, total_score: float, histogram: list) -> float:
     ACT_SAT = ACT_SAT_Conv(value, conv_dict)
 
     if ACT_SAT == 36:  # Special case to give a few extra bonus fractions to perfect scores
@@ -213,7 +210,7 @@ def ACT_SAT_Calc(value, conv_dict, total_score, histogram):
         return total_score * percentileofscore(histogram, ACT_SAT) / 100
 
 
-def class_split(classes):
+def class_split(classes: list) -> list:
     classes = classes.replace(':', '')
 
     classes = classes.replace('w/', 'with')
@@ -273,18 +270,16 @@ def class_split(classes):
     return class_list
 
 
-def COMMS_calc(value):
-    COMMS = float(value)
-
-    if COMMS > 100:
+def COMMS_calc(value: float) -> int:
+    if value > 100:
         COMMS_Score = 5
-    elif COMMS > 90:
+    elif value > 90:
         COMMS_Score = 4
-    elif COMMS > 80:
+    elif value > 80:
         COMMS_Score = 3
-    elif COMMS > 70:
+    elif value > 70:
         COMMS_Score = 2
-    elif COMMS > 60:
+    elif value > 60:
         COMMS_Score = 1
     else:
         COMMS_Score = 0

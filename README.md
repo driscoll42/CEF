@@ -28,7 +28,7 @@ See scoring_util ReadMe for technical details
 * Determines reviewers are overly harsh or generous and compensates (WIP) 
 * Scores the student's STEM coursework (WIP)
 
-## Awards Determiation Features
+## Awards Determination Features
 
 * Determine the quality of the school (WIP)
 * Determine distance between school and home address (WIP)

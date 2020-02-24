@@ -8,7 +8,8 @@ import keys as keys
 
 
 # Source: https://smartystreets.com/docs/sdk/python
-def address_Validation(lastName, firstName, address1, address2, city, state, zip, country):
+def address_Validation(lastName: str, firstName: str, address1: str, address2: str, city: str, state: str, zip: str,
+                       country: str) -> str:
     # We recommend storing your secret keys in environment variables instead---it's safer!
     # auth_id = os.environ['SMARTY_AUTH_ID']
     # auth_token = os.environ['SMARTY_AUTH_TOKEN']
@@ -55,7 +56,7 @@ def address_Validation(lastName, firstName, address1, address2, city, state, zip
     return first_candidate.metadata.rdi
 
 
-def accred_check(school_list, other_School, major):
+def accred_check(school_list: list, other_school: list, major: str) -> bool:
     major = major.upper()
     major = major.strip()
     major = major.replace(' AND ', ',')
@@ -95,7 +96,7 @@ def accred_check(school_list, other_School, major):
                         if option == ABET_major or option == 'UNDECIDED' or option == '':
                             return True
 
-    for school in other_School:
+    for school in other_school:
         school = school.upper()
         school = school.strip()
         school = school.replace('THE ', '')
@@ -129,7 +130,7 @@ def accred_check(school_list, other_School, major):
     return Accredited
 
 
-def get_past_recipients(file):
+def get_past_recipients(file: str) -> list:
     recipient_list = []
 
     with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
@@ -142,7 +143,7 @@ def get_past_recipients(file):
     return recipient_list
 
 
-def get_school_list(file):
+def get_school_list(file: str) -> list:
     school_list = {}
     with open('School_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         d_reader = csv.DictReader(f)

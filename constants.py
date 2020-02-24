@@ -32,7 +32,7 @@ questions_2020 = {'lastName': 'LastName',
                   'ACT_SAT_value':
                       'What is your ACT or SAT score? (List the total score you wish to report, no need to specify if it is ACT or SAT)',
                   'ACTM_SATM_value':
-                      'What is your SAT or ACT Math score?',
+                      'What is your SAT or ACT Math score?fuz',
                   'COMMS_value': 'How many total community service hours have you completed during your high school career?',
                   'NON_ENG_value': 'What is your expected major starting Fall 2020?',
                   'student_type': 'What scholarship award are you applying for?',
