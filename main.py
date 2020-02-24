@@ -139,7 +139,6 @@ def compute_HS_scores(file):
                 # TODO: Send email with new students and warnings
         unique_class.sort()
         print(unique_class)
-        # TODO: Normalize reviewer scores
 
 
 def compute_C_scores(file):

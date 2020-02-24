@@ -64,7 +64,6 @@ abet_school_name = 'School Name'
 abet_major = 'Program Name'
 
 # Reviewer Constants
-
 ReviewerLastName = 'ReviewerLastName'
 ReviewerFirstName = 'ReviewerFirstName'
 StudentLastName = 'StudentLastName'
