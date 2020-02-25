@@ -1,3 +1,8 @@
+"""
+This file contains constants that are used in the other files to provide one source.
+
+It is intended for this one day to be in a non-developer accessible spreadsheet for ease of maintenance
+"""
 # TODO: Move these and other long variables to a csv
 # TODO: Figure out how to handle the questions changing
 
@@ -82,7 +87,7 @@ min_SATM = 200
 max_SATM = 800
 
 # Various functions check for student types
-high_scooler = 'HIGH SCHOOL SENIOR'
+high_schooler = 'HIGH SCHOOL SENIOR'
 college_student = 'COLLEGE STUDENT'
 
 # ABET Constants
@@ -96,3 +101,8 @@ StudentLastName = 'StudentLastName'
 StudentFirstName = 'StudentFirstName'
 GivenScore = 'GivenScore'
 ReviewStatus = 'ReviewStatus'
+
+# Normalized students, LastName concatenated with FirstName
+student1 = 'User 1Test'
+student2 = 'User 2Test'
+student3 = 'User 3Test'

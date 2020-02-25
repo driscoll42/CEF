@@ -1,17 +1,23 @@
+"""
+The main file for the project which runs by default validations for all high school and college applicants.
+It also generates a score for each applicant based on predefined criteria.
+"""
+
 import csv
 import re
 
 import constants as cs
-import scoring_util as sutil
-import util
-import validations as vali
+from utils import validations as vali, scoring_util as sutil, util
 
 
 class Student:
     """A student class to track exceptions and values"""
 
 
-# TODO: Add documentation for functions and such, sphinx?
+# TODO: Add docstrings
+# TODO: Clean up code
+# TODO: Implement Sphnix
+# TODO: Add DEBUG functionality
 # TODO: Add gitignore with emails and passwords, better secure them
 # TODO: Package numpy, scipy
 # TODO: Extract csv from AwardSpring automatically
@@ -20,6 +26,16 @@ class Student:
 # TODO: Make the ACT/SAT/GPA question numeric questions
 
 def compute_HS_scores(file: str):
+    """
+
+    Parameters
+    ----------
+    file
+
+    Returns
+    -------
+
+    """
     # Load the conversion factors into a dict to reduce the number of times we have to iterate over the files
     SAT_to_ACT_dict = util.conversion_dict('SAT_to_ACT.csv')
     SAT_to_ACT_Math_dict = util.conversion_dict('SAT_to_ACT_Math.csv')
@@ -75,15 +91,14 @@ def compute_HS_scores(file: str):
             address2 = line[cs.questions['address2']]
             city = line[cs.questions['city']]
             state = line[cs.questions['state']]
-            zip = line[cs.questions['zip']]
-            country = line[cs.questions['country']]
+            zip_code = line[cs.questions['zip']]
 
             # TODO: Overall error handling
             accred_check = ''
             ACT_SAT_Score_check = 0
             # Do below for math too
             '''if ACT_SAT_Score == -1:
-                print(ACT_SAT_value, 'No conversion factor exists for this score (is it a decmial?)')
+                print(ACT_SAT_value, 'No conversion factor exists for this score (is it a decimial?)')
             elif ACT_SAT_Score == -2:
                 print(ACT_SAT_value, 'This score is too low for the SAT and too high for the ACT, check if correct')
             elif ACT_SAT_Score == -3:
@@ -91,19 +106,19 @@ def compute_HS_scores(file: str):
 
             # TODO: Add Distance and time between home and work
             # TODO: Determine school quality
-            if 1 == 1 and cs.high_scooler in student_type.upper() and GPA_Value and ACT_SAT_value and ACTM_SATM_value and COMMS_value:
+            if 1 == 1 and cs.high_schooler in student_type.upper() and GPA_Value and ACT_SAT_value and ACTM_SATM_value and COMMS_value:
                 cnt += 1
                 # Check address if residential or commercial
                 # Only have 250 free calls per month, commenting this out until needed
-                # address_type = vali.address_Validation(lastName, firstName, address1, address2, city, state, zip,country)
+                # address_type, home_latitude, home_longitude = vali.address_Validation(lastName, firstName, address1, address2, city, state, zip_code)
                 address_type = 'Residential'
 
                 if address_type == 'Invalid Address':
                     print(
-                        'WARNING - Applicant has entered an invalid address:  ' + address1 + ' ' + address2 + ' ' + city + ' ' + state + ' ' + zip)
+                            'WARNING - Applicant has entered an invalid address:  ' + address1 + ' ' + address2 + ' ' + city + ' ' + state + ' ' + zip_code)
                 elif address_type != 'Residential':
                     print(
-                        'WARNING - Applicant has entered a non-residential address:  ' + address1 + ' ' + address2 + ' ' + city + ' ' + state + ' ' + zip)
+                            'WARNING - Applicant has entered a non-residential address:  ' + address1 + ' ' + address2 + ' ' + city + ' ' + state + ' ' + zip)
                 elif address_type == 'Residential' and city.upper() != 'CHICAGO':
                     school = high_school.upper()
                     if high_school == 'My High School is Not Listed':
@@ -111,7 +126,7 @@ def compute_HS_scores(file: str):
                     if school_list[school] != 'CHICAGO':
                         print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
 
-                # Validation check for Accrediation of college
+                # Validation check for Accreditation of college
                 College = College.split(',')
                 Other_College = Other_College.split(',')
                 check = vali.accred_check(College, Other_College, major)
@@ -150,6 +165,16 @@ def compute_HS_scores(file: str):
 
 
 def compute_C_scores(file: str):
+    """
+
+    Parameters
+    ----------
+    file
+
+    Returns
+    -------
+
+    """
     recipient_list = vali.get_past_recipients('2019 Recipients.csv')
 
     with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
@@ -189,13 +214,16 @@ def compute_C_scores(file: str):
                             print(lastName, firstName, 'GPA is below 2.9, consider warning. GPA is ' + str(GPA_Value))
                     if major_school_change and re.sub('[^A-Za-z0-9]+', '', major_school_change.strip().upper()) != 'NO':
                         print(
-                            firstName + ' ' + lastName + ': Major or School Change, investigate: ' + major_school_change)
+                                firstName + ' ' + lastName + ': Major or School Change, investigate: ' + major_school_change)
                     if major == 'Not listed' and NON_ENG_value:
                         print(
-                            firstName + ' ' + lastName + ': Other Major Listed, validate it is engineering: ' + NON_ENG_value)
+                                firstName + ' ' + lastName + ': Other Major Listed, validate it is engineering: ' + NON_ENG_value)
 
 
 def main():
+    """
+
+    """
     filename = 'Student Answers for 2020 Incentive Awards.csv'
     compute_HS_scores(filename)
     compute_C_scores(filename)
