@@ -1,3 +1,15 @@
+"""
+This file contains a number of validations to confirm that an applicant is qualified for an award.
+
+High School Students:
+address_validation - Verify applicant lives in Chicago
+accred_check - Verify applicant is accepted into an ABET accredited program
+
+College students:
+get_past_recipients - get a list of past recipients to verify they recieved it as a high school senior
+get_school_list - returns list of Illinois high schools
+"""
+
 import csv
 from typing import Tuple
 
@@ -213,7 +225,7 @@ def get_past_recipients(file: str) -> list:
 
 
 def get_school_list(file: str) -> dict:
-    """ A simple function to turn a file containing the list of high schools in Illinois with their cityand return it
+    """ A simple function to turn a file containing the list of high schools in Illinois with their city and return it
         as a dict
 
     Parameters

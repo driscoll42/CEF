@@ -14,23 +14,25 @@ class Student:
     """A student class to track exceptions and values"""
 
 
-# TODO: Add docstrings
 # TODO: Clean up code
 # TODO: Implement Sphnix
 # TODO: Add DEBUG functionality
 # TODO: Add gitignore with emails and passwords, better secure them
 # TODO: Package numpy, scipy
-# TODO: Extract csv from AwardSpring automatically
-# TODO: Replace all csvs with Google Spreadsheets https://www.twilio.tcom/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html
+# TODO: Extract csv from AwardSpring automatically - https://automatetheboringstuff.com/2e/chapter12/
+# TODO: Replace all csvs with Google Spreadsheets https://www.twilio.tcom/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html https://automatetheboringstuff.com/2e/chapter14/
 # TODO: Host this on an AWS server ? https://realpython.com/python-sql-libraries/
 # TODO: Make the ACT/SAT/GPA question numeric questions
+# TODO: Validate ACT/SAT pdfs - https://automatetheboringstuff.com/2e/chapter15/
+# TODO: Extract coursework from transcripts
 
 def compute_HS_scores(file: str):
-    """
+    """The main function that computes the high school student's scores and validates their application
 
     Parameters
     ----------
-    file
+    file : str
+        The file with all of the student's answers
 
     Returns
     -------
@@ -155,21 +157,21 @@ def compute_HS_scores(file: str):
 
                 print(lastName + ', ' + firstName + ':', GPA_Score, ACT_SAT_Score, ACTM_SATM_Score, COMMS_Score,
                       reviewer_score)
-                print(accred_check)
+                # print(accred_check)
 
                 # TODO: Write back to Excel File or Google Spreadsheets
-                # TODO: Send email with new students and warnings
+                # TODO: Send email with new students and warnings https://automatetheboringstuff.com/2e/chapter18/
         unique_class.sort()
-        print(unique_class)
-        print(cnt)
 
 
 def compute_C_scores(file: str):
-    """
+    """The main function that checks college student's eligibility for the award
 
     Parameters
     ----------
-    file
+    file : str
+        The file with all of the student's answers
+
 
     Returns
     -------
@@ -222,7 +224,7 @@ def compute_C_scores(file: str):
 
 def main():
     """
-
+    The main function which runs the program
     """
     filename = 'Student Answers for 2020 Incentive Awards.csv'
     compute_HS_scores(filename)

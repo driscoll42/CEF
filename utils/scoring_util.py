@@ -1,5 +1,15 @@
 """
 All functions related to generating the score for each applicant
+
+get_reviewer_scores_normalized - returns a dict of normalized reviewer scores
+get_reviewer_scores - returns the average score for each student in a dict
+generate_histo_arrays - generates lists containing all the ACT and ACTM scores
+GPA_Calc - Calculates the number of points a student gets for their GPA
+ACT_SAT_Conv - Converts SAT scores to ACT scores
+ACT_SAT_Calc - The scoring function for ACT and ACT Math
+class_split - WIP: A function that cleans an input list of classes the student has taken
+COMMS_calc - Converts total community service hours into a score
+
 """
 
 import csv
@@ -19,7 +29,13 @@ from utils import util
 # Currently it works if a reviewer has a z score, for all students, greater or less than 1/-1 for all test students
 #
 def get_reviewer_scores_normalized(file: str) -> dict:
-    """
+    """This function takes in a file with all the reviews for all students and normalizes them. It does this based on
+    the prerequisite that all reviewers have been assigned the same three students to review in addition to others.
+    The program will compute the z-score for each reviewer and student combo for the three in question (how many
+    standard deviations they are from the student's mean score). If a reviewer is consistently one standard deviation
+    or more away from the mean in a positive or negative direction we assume they are a generous or harsh reviewer and
+    when returning the average score for each student adjust those reviewer scores by one half of the average standard
+    deviation for the three students.
 
     Parameters
     ----------
@@ -28,7 +44,8 @@ def get_reviewer_scores_normalized(file: str) -> dict:
 
     Returns
     -------
-    object
+    reviewer_output : dict
+        A dictionary of normalized reviewer scores
 
     """
     reviewer_list = []
@@ -46,7 +63,7 @@ def get_reviewer_scores_normalized(file: str) -> dict:
     generous_reviewer = []
     reviewer_output = {}
 
-    with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
+    with open('../Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         # get fieldnames from DictReader object and store in list
         d_reader = csv.DictReader(f)
         for line in d_reader:
@@ -103,39 +120,38 @@ def get_reviewer_scores_normalized(file: str) -> dict:
         for i, review in enumerate(all_scores[s]):
             if review[0] in harsh_reviewer:
                 if s not in reviewer_output:
-                    reviewer_output[s] = review[1] + (student1_std + student2_std + student3_std) / 3
+                    reviewer_output[s] = review[1] + (student1_std + student2_std + student3_std) / 3 / 2
                 else:
                     reviewer_output[s] = reviewer_output[s] + (
-                            (review[1] + (student1_std + student2_std + student3_std) / 3) - reviewer_output[s]) / n
+                            (review[1] + (student1_std + student2_std + student3_std) / 3 / 2) - reviewer_output[s]) / n
             elif review[0] in generous_reviewer:
                 if s not in reviewer_output:
-                    reviewer_output[s] = review[1] - (student1_std + student2_std + student3_std) / 3
+                    reviewer_output[s] = review[1] - (student1_std + student2_std + student3_std) / 3 / 2
                 else:
                     reviewer_output[s] = reviewer_output[s] + (
-                            (review[1] - (student1_std + student2_std + student3_std) / 3) - reviewer_output[s]) / n
+                            (review[1] - (student1_std + student2_std + student3_std) / 3 / 2) - reviewer_output[s]) / n
             else:
                 if s not in reviewer_output:
-                    reviewer_output[s] = review[1] - (student1_std + student2_std + student3_std) / 3
+                    reviewer_output[s] = review[1]
                 else:
                     reviewer_output[s] = reviewer_output[s] + (
-                            (review[1] - (student1_std + student2_std + student3_std) / 3) - reviewer_output[s]) / n
+                            (review[1]) - reviewer_output[s]) / n
 
     return reviewer_output
 
 
-# print(get_reviewer_scores_normalized('NormalizeTest.csv', 'User 1Test', 'User 2Test',                                     'User 3Test'))
-
-
 def get_reviewer_scores(file: str) -> dict:
-    """
+    """Returns the average score for each student in a dict
 
     Parameters
     ----------
-    file
+    file : str
+        The name of the file which contains the reviewer scores
 
     Returns
     -------
-
+    reviewer_avg : dict
+        A dictionary of averaged reviewer scores by student
     """
     reviewer_avg = {}
     student_cnt = {}
@@ -164,18 +180,25 @@ def get_reviewer_scores(file: str) -> dict:
 
 
 def generate_histo_arrays(file: str, SAT_to_ACT_dict: dict, SAT_to_ACT_Math_dict: dict) -> Tuple[list, list]:
-    """
+    """This function takes in a file with all student's ACT/SAT scores (Composite and Math) along with conversion dicts
+    to convert SAT scores to ACT scores, and outputs two lists, with all the ACT (SAT's converted) and ACT Math scores
+    in a list. This is used to generate histograms later on
 
     Parameters
     ----------
     file : str
+        The file name containing the student's ACT/SAT scores
     SAT_to_ACT_dict : dict
+        A dict containing what ACT score is equivalent to what SAT score (Composite)
     SAT_to_ACT_Math_dict : dict
+        A dict containing what ACT score is equivalent to what SAT score (Math)
 
     Returns
     -------
     ACT_Overall : list
+        A list of all applicants ACT scores, duplicates are not removed and does not list student
     ACTM_Overall : list
+        A list of all applicants ACT Math scores, duplicates are not removed and does not list student
 
     """
     # Create arrays to store the total for each ACT score type to determine percentiles
@@ -200,18 +223,24 @@ def generate_histo_arrays(file: str, SAT_to_ACT_dict: dict, SAT_to_ACT_Math_dict
                 # Don't want to add the error values into our histogram and frankly only worth considering those which meet our minimum
                 if ACTM_Score > 21:
                     ACTM_Overall.append(ACTM_Score)
+    # TODO: A minor speed enhancement would be to return a dict of histogram percentiles here rather than later on
     return ACT_Overall, ACTM_Overall
 
 
 def GPA_Calc(gpa: float) -> float:
-    """
+    """Calculates the number of points a student gets for their GPA. Any GPA scores over 4 are assumed to be out of 5,
+    and any over 5 are assumed to be out of 6. These are then turned into 4.0 scores. AFter that, 2.91 is worth 1 point
+    and every 0.10 is an extra point up to 10 points
 
     Parameters
     ----------
-    gpa
+    gpa : float
+        The student's GPA score
 
     Returns
     -------
+    GPA_Score : float
+        The number of points they get for the GPA
 
     """
     # If over 4 assume out of 5.0 scale, if over 5.0 assume 6.0
@@ -234,15 +263,18 @@ def GPA_Calc(gpa: float) -> float:
 # Source: https://www.act.org/content/dam/act/unsecured/documents/ACT-SAT-Concordance-Tables.pdf
 
 def ACT_SAT_Conv(score: float, conv_dict: dict) -> int:
-    """
+    """Converts SAT scores to ACT scores
 
     Parameters
     ----------
-    score
-    conv_dict
-
+    score : float
+        The student's ACT/SAT score
+    conv_dict : dict
+        A conversion dict for SAT to ACT
     Returns
     -------
+    score : int
+        The score in ACT terms
 
     """
     # Sanity checks for min/max scores
@@ -260,18 +292,23 @@ def ACT_SAT_Conv(score: float, conv_dict: dict) -> int:
 
 
 def ACT_SAT_Calc(value: float, conv_dict: dict, total_score: float, histogram: list) -> float:
-    """
+    """The scoring function for ACT and ACT Math. We multiply the percentile of their score by a total_score
 
     Parameters
     ----------
     value : float
+        The SAT/ACT score of the student
     conv_dict : dict
+        The conversion dict of SAT to ACT
     total_score : float
+        How many total points the ACT/SAT is worth on the application
     histogram : list
+        A list of all ACT scores over all applicants
 
     Returns
     -------
     total_score : float
+        Thee student's total score for the ACT or SAT
 
     """
     ACT_SAT = ACT_SAT_Conv(value, conv_dict)

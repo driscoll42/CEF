@@ -1,5 +1,8 @@
 """
 This file contains various functions which don't classify into scoring or validations and are used throughout the code
+
+get_num - returns first number in a string
+conversion_dict - implementation of VLOOKUP for python
 """
 
 import csv
