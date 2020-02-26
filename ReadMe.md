@@ -25,7 +25,7 @@ See scoring_util ReadMe for technical details
 * Scores GPA based on percentile bracketing
 * Converts SAT Scores to equivalent ACT scores
 * Scores ACT and ACT Math on percentile bracketing
-* Determines reviewers are overly harsh or generous and compensates (WIP) 
+* Determines reviewers are overly harsh or generous and compensates
 * Scores the student's STEM coursework (WIP)
 
 ## Awards Determination Features
@@ -43,10 +43,14 @@ See scoring_util ReadMe for technical details
 
 ## Misc TODOs
 
-* Add documentation for functions and such, sphinx? (WIP)
+* Implement Sphninx (WIP)
 * Add gitignore with emails and passwords, better secure them (WIP)
 * For next year award, make the ACT/SAT/GPA questions numeric (WIP)
 
+## Long Term TODOs
+
+* Download student's ACT/SAT report and validate
+* Download student's transcript and scrape coursework off of it
 
 ## Install Instructions
 

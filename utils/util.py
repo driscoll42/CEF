@@ -6,7 +6,6 @@ conversion_dict - implementation of VLOOKUP for python
 """
 
 import csv
-import re
 
 
 # Too much of the data is dirty often times, this function gets the first number in a string, and returns it
@@ -25,7 +24,14 @@ def get_num(input_text: str) -> float:
         The first number in the input_text, or a 0.0 if no number found
     """
 
-    list_of_nums = re.findall(r'\d+', input_text)
+    # https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python/4289415#4289415
+    list_of_nums = []
+    for t in input_text.split():
+        try:
+            list_of_nums.append(float(t))
+        except ValueError:
+            pass
+
     if len(list_of_nums) == 0:
         return 0.0
     else:

@@ -11,8 +11,29 @@ from utils import validations as vali, scoring_util as sutil, util
 
 
 class Student:
-    """A student class to track exceptions and values"""
+    """A student class to track values and validation failures"""
 
+    def __init__(self, firstName, lastName):
+        self.lastName = lastName
+        self.firstName = firstName
+        self.GPA_Value = 0
+        self.ACT_SAT_value = 0
+        self.ACTM_SATM_value = 0
+        self.COMMS_value = 0
+        self.NON_ENG_value = 0
+        self.student_type = 0
+        self.major = 0
+        self.other_major = 0
+        self.STEM_Classes = 0
+        self.College = 0
+        self.Other_College = 0
+        self.high_school = 0
+        self.high_school_other = 0
+        self.address1 = 0
+        self.address2 = 0
+        self.city = 0
+        self.state = 0
+        self.zip_code = 0
 
 # TODO: Clean up code
 # TODO: Implement Sphnix
@@ -22,9 +43,7 @@ class Student:
 # TODO: Extract csv from AwardSpring automatically - https://automatetheboringstuff.com/2e/chapter12/
 # TODO: Replace all csvs with Google Spreadsheets https://www.twilio.tcom/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html https://automatetheboringstuff.com/2e/chapter14/
 # TODO: Host this on an AWS server ? https://realpython.com/python-sql-libraries/
-# TODO: Make the ACT/SAT/GPA question numeric questions
-# TODO: Validate ACT/SAT pdfs - https://automatetheboringstuff.com/2e/chapter15/
-# TODO: Extract coursework from transcripts
+
 
 def compute_HS_scores(file: str):
     """The main function that computes the high school student's scores and validates their application
@@ -71,29 +90,36 @@ def compute_HS_scores(file: str):
             return
 
         unique_class = []
+        student_list = []
         # TODO: Check submission status, if they have not submitted but filled everything out, autowarn?
         for line in d_reader:
             lastName = line[cs.questions['lastName']]
             firstName = line[cs.questions['firstName']]
-            GPA_Value = util.get_num(line[cs.questions['GPA_Value']])
-            ACT_SAT_value = util.get_num(line[cs.questions['ACT_SAT_value']])
-            ACTM_SATM_value = util.get_num(line[cs.questions['ACTM_SATM_value']])
-            COMMS_value = util.get_num(line[cs.questions['COMMS_value']])
-            NON_ENG_value = line[cs.questions['NON_ENG_value']]
-            student_type = line[cs.questions['student_type']]
-            major = line['Major']
-            other_major = line[cs.questions['other_major']]
-            STEM_Classes = line[cs.questions['STEM_Classes']]
-            College = line[cs.questions['College']]
-            Other_College = line[cs.questions['Other_College']]
-            high_school = line[cs.questions['high_school']]
-            high_school_other = line[cs.questions['high_school_other']]
 
-            address1 = line[cs.questions['address1']]
-            address2 = line[cs.questions['address2']]
-            city = line[cs.questions['city']]
-            state = line[cs.questions['state']]
-            zip_code = line[cs.questions['zip']]
+            s = Student(firstName, lastName)
+
+            s.GPA_Value = util.get_num(line[cs.questions['GPA_Value']])
+            s.ACT_SAT_value = util.get_num(line[cs.questions['ACT_SAT_value']])
+            s.ACTM_SATM_value = util.get_num(line[cs.questions['ACTM_SATM_value']])
+
+            s.COMMS_value = util.get_num(line[cs.questions['COMMS_value']])
+            s.NON_ENG_value = line[cs.questions['NON_ENG_value']]
+            s.student_type = line[cs.questions['student_type']]
+
+            s.major = line['Major']
+            s.other_major = line[cs.questions['other_major']]
+            s.STEM_Classes = line[cs.questions['STEM_Classes']]
+
+            s.College = line[cs.questions['College']]
+            s.Other_College = line[cs.questions['Other_College']]
+            s.high_school = line[cs.questions['high_school']]
+            s.high_school_other = line[cs.questions['high_school_other']]
+
+            s.address1 = line[cs.questions['address1']]
+            s.address2 = line[cs.questions['address2']]
+            s.city = line[cs.questions['city']]
+            s.state = line[cs.questions['state']]
+            s.zip_code = line[cs.questions['zip']]
 
             # TODO: Overall error handling
             accred_check = ''
@@ -108,7 +134,7 @@ def compute_HS_scores(file: str):
 
             # TODO: Add Distance and time between home and work
             # TODO: Determine school quality
-            if 1 == 1 and cs.high_schooler in student_type.upper() and GPA_Value and ACT_SAT_value and ACTM_SATM_value and COMMS_value:
+            if 1 == 1 and cs.high_schooler in s.student_type.upper() and s.GPA_Value and s.ACT_SAT_value and s.ACTM_SATM_value and s.COMMS_value:
                 cnt += 1
                 # Check address if residential or commercial
                 # Only have 250 free calls per month, commenting this out until needed
@@ -117,50 +143,50 @@ def compute_HS_scores(file: str):
 
                 if address_type == 'Invalid Address':
                     print(
-                            'WARNING - Applicant has entered an invalid address:  ' + address1 + ' ' + address2 + ' ' + city + ' ' + state + ' ' + zip_code)
+                            'WARNING - Applicant has entered an invalid address:  ' + s.address1 + ' ' + s.address2 + ' ' + s.city + ' ' + s.state + ' ' + s.zip_code)
                 elif address_type != 'Residential':
                     print(
-                            'WARNING - Applicant has entered a non-residential address:  ' + address1 + ' ' + address2 + ' ' + city + ' ' + state + ' ' + zip)
-                elif address_type == 'Residential' and city.upper() != 'CHICAGO':
-                    school = high_school.upper()
-                    if high_school == 'My High School is Not Listed':
-                        school = high_school_other.upper()
+                            'WARNING - Applicant has entered a non-residential address:  ' + s.ddress1 + ' ' + s.address2 + ' ' + s.city + ' ' + s.state + ' ' + s.zip_code)
+                elif address_type == 'Residential' and s.city.upper() != 'CHICAGO':
+                    school = s.high_school.upper()
+                    if s.high_school == 'My High School is Not Listed':
+                        school = s.high_school_other.upper()
                     if school_list[school] != 'CHICAGO':
                         print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
 
                 # Validation check for Accreditation of college
-                College = College.split(',')
-                Other_College = Other_College.split(',')
-                check = vali.accred_check(College, Other_College, major)
+                s.College = s.College.split(',')
+                s.Other_College = s.Other_College.split(',')
+                check = vali.accred_check(s.College, s.Other_College, s.major)
                 if not check:
-                    accred_check = [College, Other_College, major, other_major]
+                    accred_check = [s.College, s.Other_College, s.major, s.other_major]
 
                 # TODO: Coursework functionality
-                classes = sutil.class_split(STEM_Classes)
+                classes = sutil.class_split(s.STEM_Classes)
                 '''for x in classes:
                     if
 
                     if x.strip() not in unique_class:
                         unique_class.append(x.strip())'''
 
-                GPA_Score = sutil.GPA_Calc(GPA_Value)
-                ACT_SAT_Score = round(sutil.ACT_SAT_Calc(ACT_SAT_value, SAT_to_ACT_dict, 10, ACT_Overall), 2)
-                ACTM_SATM_Score = round(sutil.ACT_SAT_Calc(ACTM_SATM_value, SAT_to_ACT_Math_dict, 15, ACTM_Overall), 2)
-                COMMS_Score = sutil.COMMS_calc(COMMS_value)
-                if major == 'Not listed' and NON_ENG_value:
-                    print('Potential non-engineering major, check: ' + NON_ENG_value)
+                GPA_Score = sutil.GPA_Calc(s.GPA_Value)
+                ACT_SAT_Score = round(sutil.ACT_SAT_Calc(s.ACT_SAT_value, SAT_to_ACT_dict, 10, ACT_Overall), 2)
+                ACTM_SATM_Score = round(sutil.ACT_SAT_Calc(s.ACTM_SATM_value, SAT_to_ACT_Math_dict, 15, ACTM_Overall),
+                                        2)
+                if s.major == 'Not listed' and s.NON_ENG_value:
+                    print('Potential non-engineering major, check: ' + s.NON_ENG_value)
 
                 if lastName.strip().upper() + firstName.strip().upper() in reviewer_scores:
                     reviewer_score = 0.5 * round(reviewer_scores[lastName.strip().upper() + firstName.strip().upper()])
                 else:
                     reviewer_score = 0
 
-                print(lastName + ', ' + firstName + ':', GPA_Score, ACT_SAT_Score, ACTM_SATM_Score, COMMS_Score,
-                      reviewer_score)
+                print(lastName + ', ' + firstName + ':', GPA_Score, ACT_SAT_Score, ACTM_SATM_Score, reviewer_score)
                 # print(accred_check)
 
                 # TODO: Write back to Excel File or Google Spreadsheets
                 # TODO: Send email with new students and warnings https://automatetheboringstuff.com/2e/chapter18/
+            student_list.append(s)
         unique_class.sort()
 
 
