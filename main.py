@@ -35,6 +35,7 @@ class Student:
         self.state = 0
         self.zip_code = 0
 
+
 # TODO: Clean up code
 # TODO: Implement Sphnix
 # TODO: Add DEBUG functionality
@@ -148,16 +149,23 @@ def compute_HS_scores(file: str):
                     print(
                             'WARNING - Applicant has entered a non-residential address:  ' + s.ddress1 + ' ' + s.address2 + ' ' + s.city + ' ' + s.state + ' ' + s.zip_code)
                 elif address_type == 'Residential' and s.city.upper() != 'CHICAGO':
-                    school = s.high_school.upper()
+                    school = s.high_school
                     if s.high_school == 'My High School is Not Listed':
-                        school = s.high_school_other.upper()
-                    if school_list[school] != 'CHICAGO':
+                        school = s.high_school_other
+                    # TODO: If a student lists multiple high schools?
+
+                    orig_School = school
+                    # This is an EXPENSIVE operation, avoid as much as possible
+                    school_bool, school, school_score = util.name_compare_list(school, school_list.keys(), 95)
+                    # Trial and error has found 95 to be required to ONLY get correct matches, 90 works the vast majoriy, but some false positives get through
+                    if school_list[school].upper() != 'CHICAGO':
+                        # print(orig_School, ' - ', school, school_score, school_list[school], s.city)
                         print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
 
                 # Validation check for Accreditation of college
                 s.College = s.College.split(',')
                 s.Other_College = s.Other_College.split(',')
-                check = vali.accred_check(s.College, s.Other_College, s.major)
+                check = vali.accred_check(s.College, s.Other_College, s.major)  # TODO: Implement Fuzzy Name
                 if not check:
                     accred_check = [s.College, s.Other_College, s.major, s.other_major]
 
@@ -181,7 +189,7 @@ def compute_HS_scores(file: str):
                 else:
                     reviewer_score = 0
 
-                print(lastName + ', ' + firstName + ':', GPA_Score, ACT_SAT_Score, ACTM_SATM_Score, reviewer_score)
+                # print(lastName + ', ' + firstName + ':', GPA_Score, ACT_SAT_Score, ACTM_SATM_Score, reviewer_score)
                 # print(accred_check)
 
                 # TODO: Write back to Excel File or Google Spreadsheets
@@ -229,8 +237,10 @@ def compute_C_scores(file: str):
             NON_ENG_value = line[cs.questions['NON_ENG_value']]
 
             if cs.college_student in student_type.upper():
-                if lastName.strip().upper() + firstName.strip().upper() not in recipient_list:
-                    # TODO: Implement Fuzzy Name Matching, use for schools and colleges as well
+                student_name = firstName + ' ' + lastName
+                compare_test, name, wratio = util.name_compare_list(student_name, recipient_list)
+                # print(compare_test, name, wratio)
+                if not compare_test:
                     print(firstName + ' ' + lastName + ': Student did not receive award last year')
 
                 else:
@@ -240,7 +250,8 @@ def compute_C_scores(file: str):
                             print(lastName, firstName, 'GPA is below 2.75. GPA is ' + str(GPA_Value))
                         elif GPA_Value < 2.9:
                             print(lastName, firstName, 'GPA is below 2.9, consider warning. GPA is ' + str(GPA_Value))
-                    if major_school_change and re.sub('[^A-Za-z0-9]+', '', major_school_change.strip().upper()) != 'NO':
+                    if major_school_change and re.sub('[^A-Za-z0-9]+', '', major_school_change.strip().upper()) not in [
+                        'NO', 'NA']:
                         print(
                                 firstName + ' ' + lastName + ': Major or School Change, investigate: ' + major_school_change)
                     if major == 'Not listed' and NON_ENG_value:

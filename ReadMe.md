@@ -41,6 +41,10 @@ See scoring_util ReadMe for technical details
 * Generate email with new students and validation warnings when program runs (WIP)
 * Write back data to a Google Spreadsheet  (WIP)
 
+# Other Features
+
+* When comparing names (e.g. high school, university or student names) to a list, uses fuzzy logic to account for misspellings and nicknames
+
 ## Misc TODOs
 
 * Implement Sphninx (WIP)
@@ -55,7 +59,8 @@ See scoring_util ReadMe for technical details
 ## Install Instructions
 
 * Create an Anaconda 3.7 python environment
-* Run "pip install numpy, scipy, smartystreets_python_sdk"
+* Run "pip install numpy, scipy, smartystreets_python_sdk, fuzzywuzzy, python-Levenshtein"
+* Run "conda install python-levenshtein"
 * Then run the main.py
 
 ## Release History

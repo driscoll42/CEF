@@ -3,9 +3,15 @@ This file contains various functions which don't classify into scoring or valida
 
 get_num - returns first number in a string
 conversion_dict - implementation of VLOOKUP for python
+name_compare_list - Implements fuzzy name matching on a string and a list
+name_compare - Implements fuzzy name matching on two strings
 """
 
 import csv
+from typing import Tuple
+
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
 
 
 # Too much of the data is dirty often times, this function gets the first number in a string, and returns it
@@ -70,3 +76,59 @@ def conversion_dict(file_name: str) -> dict:
             conv_doc[int(line[header_one])] = int(line[header_two])
 
     return conv_doc
+
+
+def name_compare_list(name: str, list_of_names: list, minScore: int = 85) -> Tuple[bool, str, int]:
+    """Implements fuzzy name matching on a string and a list, if no name found it returns 'No Close Matching Name'
+    This is implemented using the fuzzywuzzy package, see link below for details
+    https://www.datacamp.com/community/tutorials/fuzzy-string-python
+
+    Parameters
+    ----------
+    name : str
+        The name trying to find if exists in list
+    list_of_names : str
+        A list of known good names
+
+    Returns
+    -------
+    cleaned_name : str
+        The name from the list which most closely matches name. Or if the score is below 85, no name
+    cleaned_name : str
+        The name from the list which most closely matches name. Or if the score is below 85, no name
+    wratio : str
+        The name from the list which most closely matches name. Or if the score is below 85, no name
+    """
+
+    cleaned_name = process.extractOne(name, list_of_names)
+    if cleaned_name[1] < minScore:
+        return False, 'No Close Matching Name', cleaned_name[1]
+
+    return True, cleaned_name[0], cleaned_name[1]
+
+
+def name_compare(name1: str, name2: str) -> Tuple[bool, int]:
+    """Implements fuzzy name matching on two strings, returns True if close, False if not
+    This is implemented using the fuzzywuzzy package, see link below for details
+    https://www.datacamp.com/community/tutorials/fuzzy-string-python
+
+    Parameters
+    ----------
+    name : str
+        The first name to compare
+    list_of_names : str
+        The second name to compare
+
+    Returns
+    -------
+    cleaned_name : str
+        A bool if the two names are similar enough
+    wratio : int
+        The wratio of the two numbers
+    """
+
+    wratio = fuzz.Wratio(name1, name2)
+    if wratio < 85:
+        return False, wratio
+
+    return True, wratio

@@ -220,7 +220,7 @@ def get_past_recipients(file: str) -> list:
         for line in d_reader:
             lastName = line[cs.questions['lastName']]
             firstName = line[cs.questions['firstName']]
-            recipient_list.append(lastName.strip().upper() + firstName.strip().upper())
+            recipient_list.append(firstName.strip() + ' ' + lastName.strip())
     return recipient_list
 
 
@@ -242,6 +242,6 @@ def get_school_list(file: str) -> dict:
     with open('School_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         d_reader = csv.DictReader(f)
         for line in d_reader:
-            school_list[line['FacilityName'].upper()] = line['City'].upper()
+            school_list[line['FacilityName']] = line['City']
 
     return school_list
