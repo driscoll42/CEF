@@ -21,6 +21,7 @@ import numpy as np
 from scipy.stats import percentileofscore
 
 import constants as cs
+from classes import Student
 from utils import util
 
 
@@ -237,7 +238,7 @@ def generate_histo_arrays(file: str, SAT_to_ACT_dict: dict, SAT_to_ACT_Math_dict
 # It's easier to work in terms of ACT score and to convert everything to the same scale
 # Source: https://www.act.org/content/dam/act/unsecured/documents/ACT-SAT-Concordance-Tables.pdf
 
-def ACT_SAT_Conv(score: float, conv_dict: dict) -> int:
+def ACT_SAT_Conv(student: Student, score: float, conv_dict: dict, test_type: str) -> int:
     """Converts SAT scores to ACT scores
 
     Parameters
@@ -246,6 +247,8 @@ def ACT_SAT_Conv(score: float, conv_dict: dict) -> int:
         The student's ACT/SAT score
     conv_dict : dict
         A conversion dict for SAT to ACT
+    test_type : str
+        'C' : Composite, 'M' : Math
     Returns
     -------
     score : int
@@ -254,21 +257,25 @@ def ACT_SAT_Conv(score: float, conv_dict: dict) -> int:
     """
     # Sanity checks for min/max scores
     if 36 < score < cs.min_SAT:
-        return -2
+        student.ACT_SAT_low = True
+        score = 0
     elif cs.max_SAT < score:
-        return -3
-    elif not score.is_integer():
-        return -4
+        student.ACT_SAT_high = True
+        score = 0
+    if not score.is_integer():
+        student.ACT_SAT_decimal = True
+        score = 0
 
     if score > 36:
         try:
             score = conv_dict[score]
         except:
-            return -1
+            student.ACT_SAT_conversion = True
+            score = 0
     return score
 
 
-def ACT_SAT_Calc(value: float, conv_dict: dict, total_score: float, histogram: dict) -> float:
+def ACT_SAT_Calc(student: Student, conv_dict: dict, histogram: dict, test_type: str) -> None:
     """The scoring function for ACT and ACT Math. We multiply the percentile of their score by a total_score
 
     Parameters
@@ -281,6 +288,8 @@ def ACT_SAT_Calc(value: float, conv_dict: dict, total_score: float, histogram: d
         How many total points the ACT/SAT is worth on the application
     histogram : list
         A list of all ACT scores over all applicants
+    test_type : str
+        'C' : Composite, 'M' : Math
 
     Returns
     -------
@@ -288,17 +297,22 @@ def ACT_SAT_Calc(value: float, conv_dict: dict, total_score: float, histogram: d
         Thee student's total score for the ACT or SAT
 
     """
-    ACT_SAT = ACT_SAT_Conv(value, conv_dict)
+    ACT_SAT = ACT_SAT_Conv(student, conv_dict, test_type)
 
     if ACT_SAT == 36:  # Special case to give a few extra bonus fractions to perfect scores
-        return total_score
+        multiplier = 1
     elif ACT_SAT < 0:
-        return ACT_SAT
+        multiplier = ACT_SAT
     else:
-        return total_score * histogram[ACT_SAT] / 100
+        multiplier = round(histogram[ACT_SAT] / 100, 2)
+
+    if test_type == 'C':
+        student.ACT_SAT_Score = multiplier * cs.ACT_Score
+    elif test_type == 'M':
+        student.ACTM_SATM_Score = multiplier * cs.ACT_Score
 
 
-def GPA_Calc(gpa: float) -> float:
+def GPA_Calc(student: Student) -> None:
     """Calculates the number of points a student gets for their GPA. Any GPA scores over 4 are assumed to be out of 5,
     and any over 5 are assumed to be out of 6. These are then turned into 4.0 scores. AFter that, 2.91 is worth 1 point
     and every 0.10 is an extra point up to 10 points
@@ -308,26 +322,19 @@ def GPA_Calc(gpa: float) -> float:
     gpa : float
         The student's GPA score
 
-    Returns
-    -------
-    GPA_Score : float
-        The number of points they get for the GPA
-
     """
     # If over 4 assume out of 5.0 scale, if over 5.0 assume 6.0
-    if math.ceil(gpa) == 5:
-        gpa = 4.0 * gpa / 5.0
-    elif math.ceil(gpa) == 6:
-        gpa = 4.0 * gpa / 6.0
+    if math.ceil(student.GPA_Value) == 5:
+        student.GPA_Value = 4.0 * student.GPA_Value / 5.0
+    elif math.ceil(student.GPA_Value) == 6:
+        student.GPA_Value = 4.0 * student.GPA_Value / 6.0
 
     # 2.90 is worth 1 point and every 0.10 is an extra point up to 10 points
-    GPA_Score = gpa - 2.8
-    GPA_Score = max(GPA_Score, 0)
-    GPA_Score = min(GPA_Score, 1)
-    GPA_Score *= 10
-    GPA_Score = round(GPA_Score, 2)
-
-    return GPA_Score
+    student.GPA_Score = student.GPA_Value - 2.8
+    student.GPA_Score = max(student.GPA_Score, 0)
+    student.GPA_Score = min(student.GPA_Score, 1)
+    student.GPA_Score *= cs.GPA_Score
+    student.GPA_Score = round(student.GPA_Score, 2)
 
 
 def class_split(classes: str) -> list:

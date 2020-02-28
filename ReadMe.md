@@ -59,7 +59,7 @@ See scoring_util ReadMe for technical details
 ## Install Instructions
 
 * Create an Anaconda 3.7 python environment
-* Run "pip install numpy, scipy, smartystreets_python_sdk, fuzzywuzzy, python-Levenshtein"
+* Run "pip install numpy, scipy, smartystreets_python_sdk, fuzzywuzzy"
 * Run "conda install python-levenshtein"
 * Then run the main.py
 

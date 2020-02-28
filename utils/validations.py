@@ -224,9 +224,9 @@ def get_past_recipients(file: str) -> list:
     return recipient_list
 
 
-def get_school_list(file: str) -> dict:
+def get_school_list(file: str) -> Tuple[dict, list]:
     """ A simple function to turn a file containing the list of high schools in Illinois with their city and return it
-        as a dict
+        as a dict. Also it returns a list of all Chicago high schools (to reduce fuzzy calls)
 
     Parameters
     ----------
@@ -237,11 +237,110 @@ def get_school_list(file: str) -> dict:
     -------
     school_list: dict
         A dictionary with a key of high school name and a value of the city the school is in
+    chicago_schools: dict
+        A list of all Chicago high schools
     """
     school_list = {}
+    chicago_schools = []
     with open('School_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         d_reader = csv.DictReader(f)
+        headers = d_reader.fieldnames
+        # print(headers)
         for line in d_reader:
-            school_list[line['FacilityName']] = line['City']
+            # Far too many of the schools have the word school and others in them which makes a fuzzy match score too high
+            orig_school_name = line['FacilityName']
+            school_name = school_name_reduce(orig_school_name, '')
 
-    return school_list
+            school_list[school_name] = line['City']
+            if line['City'].upper() == 'CHICAGO':
+                chicago_schools.append(orig_school_name.upper().strip())
+
+    return school_list, chicago_schools
+
+
+def questions_check(question_list: list) -> bool:
+    """Checks if all questions in the constants file exist in the csv header
+
+    Parameters
+    ----------
+    question_list : list
+        A list of all the questions in the csv header
+
+    Returns
+    -------
+    all_q_exist : bool
+        A true or false if all questions exist in the csv header
+
+    """
+    all_q_exist = True
+    for q in cs.questions.values():
+        if q not in question_list:
+            print('ERROR: The following question is not in the headers, check for typos: ' + str(q))
+            all_q_exist = False
+            break
+
+    return all_q_exist
+
+
+def school_name_reduce(school_name: str, other_school: str) -> str:
+    """For the fuzzy name logic, it's easier if the common text is removed from a school name. For example too many
+    have "High School" in the name leading to higher fuzzy scores.
+
+    Parameters
+    ----------
+    school_name : str
+        The school name in from predefined list
+    other_school : str
+        A school name from a freeform school field
+
+    Returns
+    -------
+    school_name : str
+        The reduced school_name
+
+    """
+    # TODO: If a student lists multiple high schools?
+    # TODO: How to deal with the same school name in multiple cities?
+    # TODO: Issue such as Trinity Academy and Trinity High School
+
+    if school_name == 'My High School is Not Listed':
+        school_name = other_school
+
+    school_name = school_name.replace(' High School', '')
+    school_name = school_name.replace(' Middle School', '')
+    school_name = school_name.replace(' Elementary School', '')
+    school_name = school_name.replace(' College Prep', '')
+    school_name = school_name.replace(' Academy', '')
+    school_name = school_name.replace(' School', '')
+    return school_name
+
+
+def list_failures(student_list: list, student_type: str):
+    """
+
+    Parameters
+    ----------
+    student_list : list
+        A list containing all the students as the student class
+    student_type : str
+        If the student is a high school or college student
+
+    Returns
+    -------
+
+    """
+    for s in student_list:
+        if s.address_type == 'Invalid Address':
+            print(
+                    'WARNING - Applicant has entered an invalid address:  ' + s.address1 + ' ' + s.address2 + ' ' + s.city + ' ' + s.state + ' ' + s.zip_code)
+        elif s.address_type != 'Residential':
+            print(
+                    'WARNING - Applicant has entered a non-residential address:  ' + s.ddress1 + ' ' + s.address2 + ' ' + s.city + ' ' + s.state + ' ' + s.zip_code)
+
+
+'''if ACT_SAT_Score == -1:
+    print(ACT_SAT_value, 'No conversion factor exists for this score (is it a decimial?)')
+elif ACT_SAT_Score == -2:
+    print(ACT_SAT_value, 'This score is too low for the SAT and too high for the ACT, check if correct')
+elif ACT_SAT_Score == -3:
+    print(ACT_SAT_value, 'This score is too high for the SAT, check if correct')'''

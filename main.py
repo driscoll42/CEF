@@ -7,33 +7,8 @@ import csv
 import re
 
 import constants as cs
+from classes import Student
 from utils import validations as vali, scoring_util as sutil, util
-
-
-class Student:
-    """A student class to track values and validation failures"""
-
-    def __init__(self, firstName, lastName):
-        self.lastName = lastName
-        self.firstName = firstName
-        self.GPA_Value = 0
-        self.ACT_SAT_value = 0
-        self.ACTM_SATM_value = 0
-        self.COMMS_value = 0
-        self.NON_ENG_value = 0
-        self.student_type = 0
-        self.major = 0
-        self.other_major = 0
-        self.STEM_Classes = 0
-        self.College = 0
-        self.Other_College = 0
-        self.high_school = 0
-        self.high_school_other = 0
-        self.address1 = 0
-        self.address2 = 0
-        self.city = 0
-        self.state = 0
-        self.zip_code = 0
 
 
 # TODO: Clean up code
@@ -58,46 +33,33 @@ def compute_HS_scores(file: str):
     -------
 
     """
-    # Load the conversion factors into a dict to reduce the number of times we have to iterate over the files
-    SAT_to_ACT_dict = util.conversion_dict('SAT_to_ACT.csv')
-    SAT_to_ACT_Math_dict = util.conversion_dict('SAT_to_ACT_Math.csv')
-    school_list = vali.get_school_list('Illinois_Schools.csv')
-
-    # Iterate through file once to get data for histograms
-    ACT_Overall, ACTM_Overall = sutil.generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict)
-
-    '''print('ACT')
-    for x in reversed(range(22, 37)):
-        print(x, ACT_Overall.count(x), round(percentileofscore(ACT_Overall, x), 2))
-    print('ACTM')
-    for x in reversed(range(22, 37)):
-        print(x, ACTM_Overall.count(x), round(percentileofscore(ACTM_Overall, x), 2))'''
-
-    reviewer_scores = sutil.get_reviewer_scores('Reviewer Scores by Applicant for 2019 Incentive Awards.csv')
-    cnt = 0
     with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         # get fieldnames from DictReader object and store in list
         d_reader = csv.DictReader(f)
         headers = d_reader.fieldnames
 
         # Check if the questions exist in the file, most often a change in the year
-        all_q_exist = True
-        for q in cs.questions.values():
-            if q not in headers:
-                print('ERROR: The following question is not in the headers, check for typos:')
-                print(q)
-                all_q_exist = False
-        if not all_q_exist:
+        if not vali.questions_check(headers):
             return
 
+        # Load the conversions and lists into variables for reuse
+        SAT_to_ACT_dict = util.conversion_dict('SAT_to_ACT.csv')
+        SAT_to_ACT_Math_dict = util.conversion_dict('SAT_to_ACT_Math.csv')
+        school_list, chicago_schools = vali.get_school_list('Illinois_Schools.csv')
+
+        # Iterate through file once to get data for histograms
+        ACT_Overall, ACTM_Overall = sutil.generate_histo_arrays(file, SAT_to_ACT_dict, SAT_to_ACT_Math_dict)
+
+        reviewer_scores = sutil.get_reviewer_scores('Reviewer Scores by Applicant for 2019 Incentive Awards.csv')
         unique_class = []
         student_list = []
         # TODO: Check submission status, if they have not submitted but filled everything out, autowarn?
+
         for line in d_reader:
             lastName = line[cs.questions['lastName']]
             firstName = line[cs.questions['firstName']]
 
-            s = Student(firstName, lastName)
+            s = Student.Student(firstName, lastName)
 
             s.GPA_Value = util.get_num(line[cs.questions['GPA_Value']])
             s.ACT_SAT_value = util.get_num(line[cs.questions['ACT_SAT_value']])
@@ -113,7 +75,7 @@ def compute_HS_scores(file: str):
 
             s.College = line[cs.questions['College']]
             s.Other_College = line[cs.questions['Other_College']]
-            s.high_school = line[cs.questions['high_school']]
+            s.high_school_full = line[cs.questions['high_school']]
             s.high_school_other = line[cs.questions['high_school_other']]
 
             s.address1 = line[cs.questions['address1']]
@@ -123,66 +85,59 @@ def compute_HS_scores(file: str):
             s.zip_code = line[cs.questions['zip']]
 
             # TODO: Overall error handling
-            accred_check = ''
-            ACT_SAT_Score_check = 0
-            # Do below for math too
-            '''if ACT_SAT_Score == -1:
-                print(ACT_SAT_value, 'No conversion factor exists for this score (is it a decimial?)')
-            elif ACT_SAT_Score == -2:
-                print(ACT_SAT_value, 'This score is too low for the SAT and too high for the ACT, check if correct')
-            elif ACT_SAT_Score == -3:
-                print(ACT_SAT_value, 'This score is too high for the SAT, check if correct')'''
-
             # TODO: Add Distance and time between home and work
             # TODO: Determine school quality
+
+            # A basic saity check that if the GPA and ACT values are populated, then the applicant is probably applying
+            # TODO: Add essay length
             if 1 == 1 and cs.high_schooler in s.student_type.upper() and s.GPA_Value and s.ACT_SAT_value and s.ACTM_SATM_value and s.COMMS_value:
-                cnt += 1
+                # Validate the applicant's address is residential and that they live or go to high school in Chicago
+
                 # Check address if residential or commercial
                 # Only have 250 free calls per month, commenting this out until needed
-                # address_type, home_latitude, home_longitude = vali.address_Validation(lastName, firstName, address1, address2, city, state, zip_code)
-                address_type = 'Residential'
+                # s.address_type, s.home_latitude, s.home_longitude = vali.address_Validation(lastName, firstName, address1, address2, city, state, zip_code)
+                s.address_type = 'Residential'
 
-                if address_type == 'Invalid Address':
-                    print(
-                            'WARNING - Applicant has entered an invalid address:  ' + s.address1 + ' ' + s.address2 + ' ' + s.city + ' ' + s.state + ' ' + s.zip_code)
-                elif address_type != 'Residential':
-                    print(
-                            'WARNING - Applicant has entered a non-residential address:  ' + s.ddress1 + ' ' + s.address2 + ' ' + s.city + ' ' + s.state + ' ' + s.zip_code)
-                elif address_type == 'Residential' and s.city.upper() != 'CHICAGO':
-                    school = s.high_school
-                    if s.high_school == 'My High School is Not Listed':
-                        school = s.high_school_other
-                    # TODO: If a student lists multiple high schools?
+                if s.address_type == 'Residential' and s.city.upper() != 'CHICAGO':
+                    s.high_school_partial = vali.school_name_reduce(s.high_school_full, s.high_school_other)
 
-                    orig_School = school
-                    # This is an EXPENSIVE operation, avoid as much as possible
-                    school_bool, school, school_score = util.name_compare_list(school, school_list.keys(), 95)
-                    # Trial and error has found 95 to be required to ONLY get correct matches, 90 works the vast majoriy, but some false positives get through
-                    if school_list[school].upper() != 'CHICAGO':
-                        # print(orig_School, ' - ', school, school_score, school_list[school], s.city)
-                        print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
+                    if s.high_school_full.upper().strip() not in chicago_schools:
+                        # This is an EXPENSIVE operation, avoid as much as possible
+                        school_bool, school, school_score = util.name_compare_list(s.high_school_partial,
+                                                                                   school_list.keys(), 95)
+                        if school_bool:
+                            s.high_school_full = school
+                            # print(s.high_school_full, ' - ', school, school_score, school_list[school], s.city)
+                            # Trial and error has found 95 to be required to ONLY get correct matches, 90 works the vast majoriy, but some false positives get through
+                            if school_list[school].upper() != 'CHICAGO':
+                                # print(orig_School, ' - ', school, school_score, school_list[school], s.city)
+                                print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
+                        else:
+                            print('Could not find matching school in system')
+                            print(s.high_school_full, ' - ', school, school_score, s.city)
 
-                # Validation check for Accreditation of college
+                # Validate the applicant is accepted into an ABET engineering program
                 s.College = s.College.split(',')
                 s.Other_College = s.Other_College.split(',')
                 check = vali.accred_check(s.College, s.Other_College, s.major)  # TODO: Implement Fuzzy Name
                 if not check:
                     accred_check = [s.College, s.Other_College, s.major, s.other_major]
+                if s.major == 'Not listed' and s.NON_ENG_value:
+                    print('Potential non-engineering major, check: ' + s.NON_ENG_value)
+
+                # Validate the applicants ACT/SAT scores and score their GPA and ACT/SAT
+                sutil.GPA_Calc(s)
+                sutil.ACT_SAT_Calc(s, SAT_to_ACT_dict, ACT_Overall, 'C')
+                sutil.ACT_SAT_Calc(s, SAT_to_ACT_Math_dict, ACTM_Overall, 'M')
 
                 # TODO: Coursework functionality
+                # Score the applicant's coursework
                 classes = sutil.class_split(s.STEM_Classes)
                 '''for x in classes:
                     if
 
                     if x.strip() not in unique_class:
                         unique_class.append(x.strip())'''
-
-                GPA_Score = sutil.GPA_Calc(s.GPA_Value)
-                ACT_SAT_Score = round(sutil.ACT_SAT_Calc(s.ACT_SAT_value, SAT_to_ACT_dict, 10, ACT_Overall), 2)
-                ACTM_SATM_Score = round(sutil.ACT_SAT_Calc(s.ACTM_SATM_value, SAT_to_ACT_Math_dict, 15, ACTM_Overall),
-                                        2)
-                if s.major == 'Not listed' and s.NON_ENG_value:
-                    print('Potential non-engineering major, check: ' + s.NON_ENG_value)
 
                 if lastName.strip().upper() + firstName.strip().upper() in reviewer_scores:
                     reviewer_score = 0.5 * round(reviewer_scores[lastName.strip().upper() + firstName.strip().upper()])
@@ -195,6 +150,7 @@ def compute_HS_scores(file: str):
                 # TODO: Write back to Excel File or Google Spreadsheets
                 # TODO: Send email with new students and warnings https://automatetheboringstuff.com/2e/chapter18/
             student_list.append(s)
+
         unique_class.sort()
 
 
@@ -211,21 +167,17 @@ def compute_C_scores(file: str):
     -------
 
     """
-    recipient_list = vali.get_past_recipients('2019 Recipients.csv')
 
     with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         # get fieldnames from DictReader object and store in list
         d_reader = csv.DictReader(f)
         headers = d_reader.fieldnames
 
-        all_q_exist = True
-        for q in cs.questions.values():
-            if q not in headers:
-                print('ERROR: The following question is not in the headers, check for typos:')
-                print(q)
-                all_q_exist = False
-        if not all_q_exist:
+        # Check if the questions exist in the file, most often a change in the year
+        if not vali.questions_check(headers):
             return
+
+        recipient_list = vali.get_past_recipients('2019 Recipients.csv')
 
         for line in d_reader:
             student_type = line[cs.questions['student_type']]
