@@ -3,8 +3,8 @@ This file contains various functions which don't classify into scoring or valida
 
 get_num - returns first number in a string
 conversion_dict - implementation of VLOOKUP for python
-name_compare_list - Implements fuzzy name matching on a string and a list
-name_compare - Implements fuzzy name matching on two strings
+name_compare_list - Implements name matching on a string and a list
+name_compare - Implements name matching on two strings
 """
 
 import csv
@@ -79,8 +79,8 @@ def conversion_dict(file_name: str) -> dict:
 
 
 def name_compare_list(name: str, list_of_names: list, minScore: int = 85) -> Tuple[bool, str, int]:
-    """Implements fuzzy name matching on a string and a list, if no name found it returns 'No Close Matching Name'
-    This is implemented using the fuzzywuzzy package, see link below for details
+    """Checks for exact match of a string and list, and if not does a fuzzy name match, if no name found it
+    returns 'No Close Matching Name'. This is implemented using the fuzzywuzzy package, see link below for details
     https://www.datacamp.com/community/tutorials/fuzzy-string-python
 
     Parameters
@@ -100,6 +100,11 @@ def name_compare_list(name: str, list_of_names: list, minScore: int = 85) -> Tup
         The name from the list which most closely matches name. Or if the score is below 85, no name
     """
 
+    # First check if the name is in the list of names, typically it is
+    if name in list_of_names:
+        return True, name, 100
+
+    # If not, then run fuzzy name extract
     cleaned_name = process.extractOne(name, list_of_names)
     if cleaned_name[1] < minScore:
         return False, 'No Close Matching Name', cleaned_name[1]
@@ -126,6 +131,9 @@ def name_compare(name1: str, name2: str) -> Tuple[bool, int]:
     wratio : int
         The wratio of the two numbers
     """
+    # Always worthwhile to do a quick exact check first
+    if name1 == name2:
+        return True, 100
 
     wratio = fuzz.Wratio(name1, name2)
     if wratio < 85:

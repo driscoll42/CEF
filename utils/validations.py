@@ -2,27 +2,78 @@
 This file contains a number of validations to confirm that an applicant is qualified for an award.
 
 High School Students:
-address_validation - Verify applicant lives in Chicago
+address_validation - Validates if an applicant's address is a real residence, if they live or go to school in in Chicago
+resident_validation - Verify applicant lives in Chicago
 accred_check - Verify applicant is accepted into an ABET accredited program
+school_name_reduce - Removes common words from school name
 
 College students:
+past_recipient - Validates if a college student is a past recipient of the award
+college_gpa - Checks if a past recipients GPA meets the threshold
+college_school_major - Validates if a college student has changed their major or school
 get_past_recipients - get a list of past recipients to verify they recieved it as a high school senior
 get_school_list - returns list of Illinois high schools
+
+Misc.:
+questions_check - Checks if all questions in the constants file exist in the csv header
+list_failures - TBD
 """
 
 import csv
+import re
 from typing import Tuple
 
 from smartystreets_python_sdk import StaticCredentials, exceptions, ClientBuilder
 from smartystreets_python_sdk.us_street import Lookup as StreetLookup
 
 import constants as cs
+from classes import Student
 from utils import keys as keys
+from utils import util
+
+
+def address_validation(s: Student, chicago_schools: list, school_list: dict) -> None:
+    """Validates if an applicant's address is a real residence, if they live or go to school in in Chicago
+
+    Parameters
+    ----------
+    s : Student
+        A member of the Student class
+    chicago_schools : list
+        A list of all Chicago high schools
+    school_list : list
+        A list of all Illinois high schools
+
+    Returns
+    -------
+    """
+    # Check address if residential or commercial and get cleaned up address
+    # resident_validation(s) # TODO: Uncomment this when running for real, only have 250 calls per month
+
+    s.address_type = 'Residential'
+
+    if s.address_type == 'Residential' and s.city.upper() != 'CHICAGO':
+        if s.high_school_full.upper().strip() not in chicago_schools:
+            s.high_school_partial = school_name_reduce(s.high_school_full, s.high_school_other)
+            # This is an computationally EXPENSIVE operation, avoid as much as possible
+            school_bool, school, school_score = util.name_compare_list(s.high_school_partial,
+                                                                       school_list.keys(), 95)
+            if school_bool:
+                s.high_school_full = school
+                # print(s.high_school_full, ' - ', school, school_score, school_list[school], s.city)
+                # Trial and error has found 95 to be required to ONLY get correct matches, 90 works the vast majoriy, but some false positives get through
+                if school_list[school].upper() != 'CHICAGO':
+                    # print(orig_School, ' - ', school, school_score, school_list[school], s.city)
+                    s.ChicagoSchool = False
+                    print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
+            else:
+                s.school_found = False
+                print('Could not find matching school in system')
+                print(s.high_school_full, ' - ', school, school_score, s.city)
 
 
 # Source: https://smartystreets.com/docs/sdk/python
-def address_validation(lastName: str, firstName: str, address1: str, address2: str, city: str, state: str,
-                       zip_code: str) -> Tuple[str, float, float]:
+def resident_validation(s: Student) -> None:
     """This function will check a given address to determine what type of address it is, either residential, commercial,
         or if it is invalid. If the address is valid, it will also return the longitude and latitude of the address
 
@@ -69,14 +120,14 @@ def address_validation(lastName: str, firstName: str, address1: str, address2: s
 
     lookup = StreetLookup()
     lookup.input_id = ""  # Optional ID from your system
-    lookup.addressee = firstName + " " + lastName
-    lookup.street = address1
+    lookup.addressee = s.firstName + " " + s.lastName
+    lookup.street = s.address1
     lookup.street2 = ""
-    lookup.secondary = address2
+    lookup.secondary = s.address2
     lookup.urbanization = ""  # Only applies to Puerto Rico addresses
-    lookup.city = city
-    lookup.state = state
-    lookup.zipcode = zip_code
+    lookup.city = s.city
+    lookup.state = s.state
+    lookup.zipcode = s.zip_code
     lookup.candidates = 3
     lookup.match = "strict"  # "invalid" is the most permissive match,
     # this will always return at least one result even if the address is invalid.
@@ -86,25 +137,98 @@ def address_validation(lastName: str, firstName: str, address1: str, address2: s
     try:
         client.send_lookup(lookup)
     except exceptions.SmartyException as err:
-        print(err)
-        return 'Error', 0.0, 0.0
+        s.other_error = False
+        s.other_error_message = s.other_error_message + ' - resident_validation failed with error: ' + err
 
     result = lookup.result
 
     if not result:
         # print("No candidates. This means the address is not valid.")
-        return 'Invalid Address', 0.0, 0.0
+        s.valid_address = False
 
     first_candidate = result[0]
 
-    residency = first_candidate.metadata.rdi
-    latitude = first_candidate.metadata.latitude
-    longitude = first_candidate.metadata.longitude
+    s.address_type = first_candidate.metadata.rdi
+    s.home_latitude = first_candidate.metadata.latitude
+    s.home_longitude = first_candidate.metadata.longitude
+    s.cleaned_address1 = first_candidate.metadata.delivery_line_1
+    s.cleaned_address2 = first_candidate.metadata.delivery_line_2
+    s.cleaned_city = first_candidate.metadata.city_name
+    s.cleaned_state = first_candidate.metadata.state_abbreviation
+    s.cleaned_zip_code = first_candidate.metadata.full_zipcode
+    s.address_footnotes = first_candidate.metadata.footnotes
 
-    return residency, latitude, longitude
+
+def past_recipient(s: Student, list_of_students: list) -> bool:
+    """Validates if a college student is a past recipient of the award
+
+    Parameters
+    ----------
+    s : Student
+        A member of the Student class
+    list_of_students : list
+        A list of all past recipients of the award
+
+    Returns
+    -------
+    compare_test : bool
+        True or False if the student is a past recipient or not
+    """
+    student_name = s.firstName + ' ' + s.lastName
+    compare_test, name, wratio = util.name_compare_list(student_name, list_of_students)
+    if not compare_test:
+        s.past_recipient = False
+        s.validationError = True
+        # print(firstName + ' ' + lastName + ': Student did not receive award last year')
+    return compare_test
 
 
-def accred_check(school_list: list, other_school: list, major: str) -> bool:
+def college_gpa(s: Student) -> None:
+    """Checks if a past recipients GPA meets the threshold
+
+    Parameters
+    ----------
+    s : Student
+        A member of the Student class
+
+    Returns
+    -------
+    """
+    if s.GPA_Value:
+        s.GPA_Value = float(s.GPA_Value)
+
+        if s.GPA_Value < cs.minimum_gpa:
+            s.GPA_C_Under = False
+            s.validationError = True
+            # print(s.lastName, s.firstName, 'GPA is below 2.75. GPA is ' + str(s.GPA_Value))
+        elif s.GPA_Value < cs.warning_gpa:
+            s.GPA_C_Warn = False
+            s.validationError = True
+            # print(s.lastName, s.firstName, 'GPA is below 2.9, consider warning. GPA is ' + str(s.GPA_Value))
+
+
+def college_school_major(s: Student) -> None:
+    """Validates if a college student has changed their major or school
+
+    Parameters
+    ----------
+    s : Student
+        A member of the Student class
+
+    Returns
+    -------
+    """
+    if s.major_school_change and re.sub('[^A-Za-z0-9]+', '', s.major_school_change.strip().upper()) not in ['NO', 'NA']:
+        s.C_College_change = False
+        s.validationError = True
+        # print(s.firstName + ' ' + s.lastName + ': Major or School Change, investigate: ' + s.major_school_change)
+    if s.major == 'Not listed' and s.NON_ENG_value:
+        s.C_Major_Warn = False
+        s.validationError = True
+        # print(s.firstName + ' ' + s.lastName + ': Other Major Listed, validate it is engineering: ' + s.NON_ENG_value)
+
+
+def accred_check(s: Student) -> None:
     """This function will determine if the applicant is going to an ABET accredited program. This requires that an
     extract from ABET's website in the "School_Data" folder. As an applicant can have multiple schools listed, this
     function iterates over all of them and checks if they are in the ABET list. If so it then compares the major the
@@ -127,9 +251,11 @@ def accred_check(school_list: list, other_school: list, major: str) -> bool:
         A bool if the school and major combination is accredited or not
 
     """
-    accredited = False
+    # TODO: Implement Fuzzy Name for school and major matching
+    school_list = s.College.split(',')
+    other_school_list = s.Other_College.split(',')
 
-    major = major.upper()
+    major = s.major.upper()
     major = major.strip()
     major = major.replace(' AND ', ',')
     major = major.replace(' ', '')
@@ -164,9 +290,9 @@ def accred_check(school_list: list, other_school: list, major: str) -> bool:
                 if school in ABET_school:
                     for option in major_list:
                         if option == ABET_major or option == 'UNDECIDED' or option == '':
-                            return True
+                            return
 
-    for school in other_school:
+    for school in other_school_list:
         school = school.upper()
         school = school.strip()
         school = school.replace('THE ', '')
@@ -194,9 +320,13 @@ def accred_check(school_list: list, other_school: list, major: str) -> bool:
                 if school in ABET_school:
                     for option in major_list:
                         if option == ABET_major or option == 'UNDECIDED' or option == '':
-                            return True
+                            return
 
-    return accredited
+    s.accredited = False
+
+    if s.major == 'Not Listed':
+        s.valid_major = False  # TODO: This probably needs work
+        # print('Potential non-engineering major, check: ' + s.NON_ENG_value)
 
 
 def get_past_recipients(file: str) -> list:

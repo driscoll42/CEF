@@ -92,6 +92,7 @@ max_SATM = 800
 ACT_Score = 10
 ACTM_Score = 15
 GPA_Score = 10
+reviewer_multiplier = 0.5
 
 # Various functions check for student types
 high_schooler = 'HIGH SCHOOL SENIOR'
@@ -116,3 +117,7 @@ student3 = 'User 3Test'
 
 # Website Constants
 AS_URL = 'https://chicagoengineersfoundation.awardspring.com/'
+
+# GPA Reqs for College
+minimum_gpa = 2.75
+warning_gpa = 2.9

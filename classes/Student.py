@@ -1,28 +1,37 @@
 class Student:
     """A student class to track values and validation failures"""
 
+    # TODO: Make High School And College student subclass
+    # TODO: Store several variables as class variables https://realpython.com/inheritance-composition-python/
+
     def __init__(self, firstName, lastName):
         self.lastName = lastName
         self.firstName = firstName
-        self.GPA_Value = 0
-        self.ACT_SAT_value = 0
-        self.ACTM_SATM_value = 0
-        self.COMMS_value = 0
-        self.NON_ENG_value = 0
-        self.student_type = 0
-        self.major = 0
-        self.other_major = 0
-        self.STEM_Classes = 0
-        self.College = 0
-        self.Other_College = 0
+        self.GPA_Value = 0.0
+        self.ACT_SAT_value = 0.0
+        self.ACTM_SATM_value = 0.0
+        self.COMMS_value = 0.0
+        self.NON_ENG_value = ''
+        self.student_type = ''
+        self.major = ''
+        self.other_major = ''
+        self.STEM_Classes = ''
+        self.College = ''
+        self.Other_College = ''
         self.high_school_partial = ''
         self.high_school_full = ''
         self.high_school_other = ''
-        self.address1 = 0
-        self.address2 = 0
-        self.city = 0
-        self.state = 0
-        self.zip_code = 0
+        self.address1 = ''
+        self.address2 = ''
+        self.city = ''
+        self.state = ''
+        self.zip_code = ''
+        self.cleaned_address1 = ''
+        self.cleaned_address2 = ''
+        self.cleaned_city = ''
+        self.cleaned_state = ''
+        self.cleaned_zip_code = ''
+        self.address_footnotes = ''
         self.address_type = ''
         self.home_latitude = 0
         self.home_longitude = 0
@@ -31,19 +40,26 @@ class Student:
         self.home_to_school_time_car = 0  # car
 
         # Score fields
-        self.GPA_Score = 0
-        self.ACT_SAT_Score = 0
-        self.ACTM_SATM_Score = 0
-        self.reviewer_score = 0
+        self.GPA_Score = 0.0
+        self.ACT_SAT_Score = 0.0
+        self.ACTM_SATM_Score = 0.0
+        self.reviewer_score = 0.0
 
         # Validation Errors
-        self.ChicagoResident = False
-        self.ChicagoSchool = False
-        self.school_found = False
-        self.accredited = False
-        self.valid_major = False
-        self.past_recipient = False
-        self.ACT_SAT_conversion = False
-        self.ACT_SAT_decimal = False
-        self.ACT_SAT_low = False
-        self.ACT_SAT_high = False
+        self.validationError = False
+        self.valid_address = True
+        self.ChicagoSchool = True
+        self.school_found = True
+        self.accredited = True
+        self.valid_major = True
+        self.past_recipient = True
+        self.ACT_SAT_conversion = True
+        self.ACT_SAT_decimal = True
+        self.ACT_SAT_low = True
+        self.ACT_SAT_high = True
+        self.GPA_C_Under = True
+        self.GPA_C_Warn = True
+        self.C_Major_Warn = True
+        self.C_College_change = True
+        self.other_error = True
+        self.other_error_message = ''

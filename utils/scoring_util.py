@@ -64,7 +64,7 @@ def get_reviewer_scores_normalized(file: str) -> dict:
     generous_reviewer = []
     reviewer_output = {}
 
-    with open('../Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
+    with open('Student_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
         # get fieldnames from DictReader object and store in list
         d_reader = csv.DictReader(f)
         for line in d_reader:
@@ -211,16 +211,16 @@ def generate_histo_arrays(file: str, SAT_to_ACT_dict: dict, SAT_to_ACT_Math_dict
         d_reader = csv.DictReader(f)
         for line in d_reader:
             student_type = line[cs.questions['student_type']]
-
-            ACT_SAT_value = util.get_num(line[cs.questions['ACT_SAT_value']])
-            ACTM_SATM_value = util.get_num(line[cs.questions['ACTM_SATM_value']])
+            s = Student.Student('Dummy', 'Student')
+            s.ACT_SAT_value = util.get_num(line[cs.questions['ACT_SAT_value']])
+            s.ACTM_SATM_value = util.get_num(line[cs.questions['ACTM_SATM_value']])
 
             if cs.high_schooler in student_type.upper():
-                ACT_score = ACT_SAT_Conv(ACT_SAT_value, SAT_to_ACT_dict)
+                ACT_score = ACT_SAT_Conv(s, SAT_to_ACT_dict, 'C')
                 # Don't want to add the error values into our histogram and frankly only worth considering those which meet our minimum
                 if ACT_score > 21:
                     ACT_Overall.append(ACT_score)
-                ACTM_Score = ACT_SAT_Conv(ACTM_SATM_value, SAT_to_ACT_Math_dict)
+                ACTM_Score = ACT_SAT_Conv(s, SAT_to_ACT_Math_dict, 'M')
                 # Don't want to add the error values into our histogram and frankly only worth considering those which meet our minimum
                 if ACTM_Score > 21:
                     ACTM_Overall.append(ACTM_Score)
@@ -238,13 +238,13 @@ def generate_histo_arrays(file: str, SAT_to_ACT_dict: dict, SAT_to_ACT_Math_dict
 # It's easier to work in terms of ACT score and to convert everything to the same scale
 # Source: https://www.act.org/content/dam/act/unsecured/documents/ACT-SAT-Concordance-Tables.pdf
 
-def ACT_SAT_Conv(student: Student, score: float, conv_dict: dict, test_type: str) -> int:
+def ACT_SAT_Conv(s: Student, conv_dict: dict, test_type: str) -> int:
     """Converts SAT scores to ACT scores
 
     Parameters
     ----------
-    score : float
-        The student's ACT/SAT score
+    student : Student
+        A member of the student Class
     conv_dict : dict
         A conversion dict for SAT to ACT
     test_type : str
@@ -255,23 +255,32 @@ def ACT_SAT_Conv(student: Student, score: float, conv_dict: dict, test_type: str
         The score in ACT terms
 
     """
+    if test_type == 'C':
+        score = s.ACT_SAT_value
+    elif test_type == 'M':
+        score = s.ACTM_SATM_value
+
     # Sanity checks for min/max scores
     if 36 < score < cs.min_SAT:
-        student.ACT_SAT_low = True
-        score = 0
+        s.validationError = True
+        s.ACT_SAT_low = False
+        score = 0.0
     elif cs.max_SAT < score:
-        student.ACT_SAT_high = True
-        score = 0
+        s.validationError = True
+        s.ACT_SAT_high = False
+        score = 0.0
     if not score.is_integer():
-        student.ACT_SAT_decimal = True
-        score = 0
+        s.validationError = True
+        s.ACT_SAT_decimal = False
+        score = 0.0
 
     if score > 36:
         try:
             score = conv_dict[score]
         except:
-            student.ACT_SAT_conversion = True
-            score = 0
+            s.validationError = True
+            s.ACT_SAT_conversion = False
+            score = 0.0
     return score
 
 
@@ -280,12 +289,10 @@ def ACT_SAT_Calc(student: Student, conv_dict: dict, histogram: dict, test_type: 
 
     Parameters
     ----------
-    value : float
-        The SAT/ACT score of the student
+    student : Student
+        A member of the student Class
     conv_dict : dict
         The conversion dict of SAT to ACT
-    total_score : float
-        How many total points the ACT/SAT is worth on the application
     histogram : list
         A list of all ACT scores over all applicants
     test_type : str
@@ -293,11 +300,13 @@ def ACT_SAT_Calc(student: Student, conv_dict: dict, histogram: dict, test_type: 
 
     Returns
     -------
-    total_score : float
-        Thee student's total score for the ACT or SAT
-
     """
-    ACT_SAT = ACT_SAT_Conv(student, conv_dict, test_type)
+    ACT_SAT = 0
+    # This may be a bit redundant, but I like breaking it up
+    if test_type == 'C':
+        ACT_SAT = ACT_SAT_Conv(student, conv_dict, test_type)
+    elif test_type == 'M':
+        ACT_SAT = ACT_SAT_Conv(student, conv_dict, test_type)
 
     if ACT_SAT == 36:  # Special case to give a few extra bonus fractions to perfect scores
         multiplier = 1
@@ -309,7 +318,7 @@ def ACT_SAT_Calc(student: Student, conv_dict: dict, histogram: dict, test_type: 
     if test_type == 'C':
         student.ACT_SAT_Score = multiplier * cs.ACT_Score
     elif test_type == 'M':
-        student.ACTM_SATM_Score = multiplier * cs.ACT_Score
+        student.ACTM_SATM_Score = multiplier * cs.ACTM_Score
 
 
 def GPA_Calc(student: Student) -> None:
@@ -319,8 +328,8 @@ def GPA_Calc(student: Student) -> None:
 
     Parameters
     ----------
-    gpa : float
-        The student's GPA score
+    student : Student
+        A member of the student Class
 
     """
     # If over 4 assume out of 5.0 scale, if over 5.0 assume 6.0
@@ -335,6 +344,11 @@ def GPA_Calc(student: Student) -> None:
     student.GPA_Score = min(student.GPA_Score, 1)
     student.GPA_Score *= cs.GPA_Score
     student.GPA_Score = round(student.GPA_Score, 2)
+
+
+def score_coursework(s: Student) -> None:
+    # TODO: Coursework functionality
+    classes = class_split(s.STEM_Classes)
 
 
 def class_split(classes: str) -> list:
@@ -406,6 +420,12 @@ def class_split(classes: str) -> list:
     classes = classes.replace(',,', ',')
 
     class_list = classes.split(',')
+
+    '''for x in classes:
+        if
+
+        if x.strip() not in unique_class:
+            unique_class.append(x.strip())'''
 
     return class_list
 
