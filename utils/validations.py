@@ -372,7 +372,7 @@ def get_school_list(file: str) -> Tuple[dict, list]:
     """
     school_list = {}
     chicago_schools = []
-    with open('School_Data/' + str(file), 'r', encoding="utf-8-sig") as f:
+    with open('School_Data/' + str(file), 'r') as f:
         d_reader = csv.DictReader(f)
         headers = d_reader.fieldnames
         # print(headers)
