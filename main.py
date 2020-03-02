@@ -12,16 +12,27 @@ from classes import Student
 from utils import validations as vali, scoring_util as sutil, util
 
 
-# TODO: Implement Sphnix
-# TODO: Add DEBUG functionality
-# TODO: Add gitignore with emails and passwords, better secure them
-# TODO: Package numpy, scipy
-# TODO: Extract csv from AwardSpring automatically - https://automatetheboringstuff.com/2e/chapter12/
+# TODO: Overall error handling
+# TODO: Test cases for each error type and function   https://realpython.com/python-testing/
 # TODO: Replace all csvs with Google Spreadsheets https://www.twilio.tcom/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html https://automatetheboringstuff.com/2e/chapter14/
+# TODO: Coursework functionality
+# TODO: Extract csv from AwardSpring automatically - https://automatetheboringstuff.com/2e/chapter12/
+
+# TODO: Implement Sphnix
+# TODO: Move constants to Google Spreadsheet for non-dev user to update
+
+# TODO: Add DEBUG functionality
+# TODO: Add Distance and time between home and work
+# TODO: Determine school quality
+# TODO: Check submission status, if they have not submitted but filled everything out, autowarn?
+# TODO: Make High School And College student subclass
+# TODO: Store several variables as class variables https://realpython.com/inheritance-composition-python/
 # TODO: Host this on an AWS server ? https://realpython.com/python-sql-libraries/
 # TODO: Verify ACT/SAT from pdf https://pypi.org/project/pdftotext/
 # TODO: Extract coursework from pdf https://pypi.org/project/pdftotext/
-# TODO: Test cases for each error type and function
+# TODO: Figure out how to handle the questions changing
+# TODO: Add gitignore with emails and passwords, better secure them
+# TODO: Package numpy, scipy
 
 def compute_HS_scores(file: str):
     """The main function that computes the high school student's scores and validates their application
@@ -56,7 +67,6 @@ def compute_HS_scores(file: str):
         # reviewer_scores = sutil.get_reviewer_scores_normalized('Reviewer Scores by Applicant for 2019 Incentive Awards.csv')
         reviewer_scores = sutil.get_reviewer_scores('Reviewer Scores by Applicant for 2019 Incentive Awards.csv')
         student_list = []
-        # TODO: Check submission status, if they have not submitted but filled everything out, autowarn?
 
         for line in d_reader:
             lastName = line[cs.questions['lastName']]
@@ -86,10 +96,6 @@ def compute_HS_scores(file: str):
             s.city = line[cs.questions['city']]
             s.state = line[cs.questions['state']]
             s.zip_code = line[cs.questions['zip']]
-
-            # TODO: Overall error handling
-            # TODO: Add Distance and time between home and work
-            # TODO: Determine school quality
 
             # A basic saity check that if the GPA and ACT values are populated, then the applicant is probably applying
             if 1 == 1 and cs.high_schooler in s.student_type.upper() and s.GPA_Value and s.ACT_SAT_value and s.ACTM_SATM_value and s.COMMS_value:
@@ -187,7 +193,6 @@ def generate_student_data(file: str) -> Tuple[list, list]:
         A list containing instances of the Student class of all the high school students
 
     """
-    # TODO: Make this work
 
     high_school_students = []
     college_students = []

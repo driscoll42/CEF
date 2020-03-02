@@ -3,8 +3,6 @@ This file contains constants that are used in the other files to provide one sou
 
 It is intended for this one day to be in a non-developer accessible spreadsheet for ease of maintenance
 """
-# TODO: Move these and other long variables outside of a py file so a non-technical user can edit them
-# TODO: Figure out how to handle the questions changing
 
 questions = {'lastName'           : 'LastName',
              'firstName'          : 'FirstName',

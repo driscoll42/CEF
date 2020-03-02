@@ -1,9 +1,6 @@
 class Student:
     """A student class to track values and validation failures"""
 
-    # TODO: Make High School And College student subclass
-    # TODO: Store several variables as class variables https://realpython.com/inheritance-composition-python/
-
     def __init__(self, firstName, lastName):
         self.lastName = lastName
         self.firstName = firstName

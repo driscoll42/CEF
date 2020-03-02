@@ -347,7 +347,6 @@ def GPA_Calc(student: Student) -> None:
 
 
 def score_coursework(s: Student) -> None:
-    # TODO: Coursework functionality
     classes = class_split(s.STEM_Classes)
 
 
