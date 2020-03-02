@@ -63,6 +63,12 @@ See scoring_util ReadMe for technical details
 * Run "conda install python-levenshtein"
 * Then run the main.py
 
+# How to Run
+
+* After installing, download the latest "Student Answers" from AwardSpring into the Student_Data folder
+* Ensure all the questions in the constants.py file match the questions in the downloaded csv
+* Run main.py
+
 ## Release History
 
 * 0.1.0
