@@ -32,7 +32,8 @@ from utils import keys as keys
 from utils import util
 
 
-def address_validation(s: Student, chicago_schools: list, school_list: dict) -> None:
+def address_validation(s: Student, chicago_schools: list, school_list: dict, verbose: bool = False, DEBUG: bool = False,
+                       CALL_APIS: bool = False) -> None:
     """Validates if an applicant's address is a real residence, if they live or go to school in in Chicago
 
     Parameters
@@ -48,7 +49,8 @@ def address_validation(s: Student, chicago_schools: list, school_list: dict) -> 
     -------
     """
     # Check address if residential or commercial and get cleaned up address
-    # resident_validation(s) # TODO: Uncomment this when running for real, only have 250 calls per month
+    if CALL_APIS:
+        resident_validation(s, verbose, DEBUG)
 
     s.address_type = 'Residential'
 
@@ -65,15 +67,20 @@ def address_validation(s: Student, chicago_schools: list, school_list: dict) -> 
                 if school_list[school].upper() != 'CHICAGO':
                     # print(orig_School, ' - ', school, school_score, school_list[school], s.city)
                     s.ChicagoSchool = False
-                    print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
+                    if verbose:
+                        print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
             else:
                 s.school_found = False
-                print('Could not find matching school in system')
-                print(s.high_school_full, ' - ', school, school_score, s.city)
+                if verbose:
+                    print('Could not find matching school in system')
+                    print(s.high_school_full, ' - ', school, school_score, s.city)
+
+    if CALL_APIS:
+        util.distance_between(s)
 
 
 # Source: https://smartystreets.com/docs/sdk/python
-def resident_validation(s: Student) -> None:
+def resident_validation(s: Student, verbose: bool = False, DEBUG: bool = False) -> None:
     """This function will check a given address to determine what type of address it is, either residential, commercial,
         or if it is invalid. If the address is valid, it will also return the longitude and latitude of the address
 
@@ -143,23 +150,23 @@ def resident_validation(s: Student) -> None:
     result = lookup.result
 
     if not result:
-        # print("No candidates. This means the address is not valid.")
+        if verbose:
+            print("No candidates. This means the address is not valid.")
         s.valid_address = False
+    else:
+        first_candidate = result[0]
+        s.address_type = first_candidate.metadata.rdi
+        s.home_latitude = first_candidate.metadata.latitude
+        s.home_longitude = first_candidate.metadata.longitude
+        s.cleaned_address1 = first_candidate.delivery_line_1
+        s.cleaned_address2 = first_candidate.delivery_line_2
+        s.cleaned_city = first_candidate.components.city_name
+        s.cleaned_state = first_candidate.components.state_abbreviation
+        s.cleaned_zip_code = first_candidate.components.zipcode
+        s.address_footnotes = first_candidate.analysis.footnotes
 
-    first_candidate = result[0]
 
-    s.address_type = first_candidate.metadata.rdi
-    s.home_latitude = first_candidate.metadata.latitude
-    s.home_longitude = first_candidate.metadata.longitude
-    s.cleaned_address1 = first_candidate.metadata.delivery_line_1
-    s.cleaned_address2 = first_candidate.metadata.delivery_line_2
-    s.cleaned_city = first_candidate.metadata.city_name
-    s.cleaned_state = first_candidate.metadata.state_abbreviation
-    s.cleaned_zip_code = first_candidate.metadata.full_zipcode
-    s.address_footnotes = first_candidate.metadata.footnotes
-
-
-def past_recipient(s: Student, list_of_students: list) -> bool:
+def past_recipient(s: Student, list_of_students: list, verbose: bool = False, DEBUG: bool = False) -> bool:
     """Validates if a college student is a past recipient of the award
 
     Parameters
@@ -179,11 +186,12 @@ def past_recipient(s: Student, list_of_students: list) -> bool:
     if not compare_test:
         s.past_recipient = False
         s.validationError = True
-        # print(firstName + ' ' + lastName + ': Student did not receive award last year')
+        if verbose:
+            print(s.firstName + ' ' + s.lastName + ': Student did not receive award last year')
     return compare_test
 
 
-def college_gpa(s: Student) -> None:
+def college_gpa(s: Student, verbose: bool = False, DEBUG: bool = False) -> None:
     """Checks if a past recipients GPA meets the threshold
 
     Parameters
@@ -200,14 +208,16 @@ def college_gpa(s: Student) -> None:
         if s.GPA_Value < cs.minimum_gpa:
             s.GPA_C_Under = False
             s.validationError = True
-            # print(s.lastName, s.firstName, 'GPA is below 2.75. GPA is ' + str(s.GPA_Value))
+            if verbose:
+                print(s.lastName, s.firstName, 'GPA is below 2.75. GPA is ' + str(s.GPA_Value))
         elif s.GPA_Value < cs.warning_gpa:
             s.GPA_C_Warn = False
             s.validationError = True
-            # print(s.lastName, s.firstName, 'GPA is below 2.9, consider warning. GPA is ' + str(s.GPA_Value))
+            if verbose:
+                print(s.lastName, s.firstName, 'GPA is below 2.9, consider warning. GPA is ' + str(s.GPA_Value))
 
 
-def college_school_major(s: Student) -> None:
+def college_school_major(s: Student, verbose: bool = False, DEBUG: bool = False) -> None:
     """Validates if a college student has changed their major or school
 
     Parameters
@@ -218,17 +228,21 @@ def college_school_major(s: Student) -> None:
     Returns
     -------
     """
+    # TODO: Check that their major is still engineering even if they don't say they changed
     if s.major_school_change and re.sub('[^A-Za-z0-9]+', '', s.major_school_change.strip().upper()) not in ['NO', 'NA']:
         s.C_College_change = False
         s.validationError = True
-        # print(s.firstName + ' ' + s.lastName + ': Major or School Change, investigate: ' + s.major_school_change)
+        if verbose:
+            print(s.firstName + ' ' + s.lastName + ': Major or School Change, investigate: ' + s.major_school_change)
     if s.major == 'Not listed' and s.NON_ENG_value:
         s.C_Major_Warn = False
         s.validationError = True
-        # print(s.firstName + ' ' + s.lastName + ': Other Major Listed, validate it is engineering: ' + s.NON_ENG_value)
+        if verbose:
+            print(
+                s.firstName + ' ' + s.lastName + ': Other Major Listed, validate it is engineering: ' + s.NON_ENG_value)
 
 
-def accred_check(s: Student) -> None:
+def accred_check(s: Student, verbose: bool = False, DEBUG: bool = False) -> None:
     """This function will determine if the applicant is going to an ABET accredited program. This requires that an
     extract from ABET's website in the "School_Data" folder. As an applicant can have multiple schools listed, this
     function iterates over all of them and checks if they are in the ABET list. If so it then compares the major the
@@ -326,10 +340,11 @@ def accred_check(s: Student) -> None:
 
     if s.major == 'Not Listed':
         s.valid_major = False  # TODO: This probably needs work
-        # print('Potential non-engineering major, check: ' + s.NON_ENG_value)
+        if verbose:
+            print('Potential non-engineering major, check: ' + s.NON_ENG_value)
 
 
-def get_past_recipients(file: str) -> list:
+def get_past_recipients(file: str, verbose: bool = False, DEBUG: bool = False) -> list:
     """ A simple function to turn a file containing the list of past recipients of the award into a list
 
     Parameters
@@ -354,7 +369,7 @@ def get_past_recipients(file: str) -> list:
     return recipient_list
 
 
-def get_school_list(file: str) -> Tuple[dict, list]:
+def get_school_list(file: str, verbose: bool = False, DEBUG: bool = False) -> Tuple[dict, list]:
     """ A simple function to turn a file containing the list of high schools in Illinois with their city and return it
         as a dict. Also it returns a list of all Chicago high schools (to reduce fuzzy calls)
 
@@ -388,7 +403,7 @@ def get_school_list(file: str) -> Tuple[dict, list]:
     return school_list, chicago_schools
 
 
-def questions_check(question_list: list) -> bool:
+def questions_check(question_list: list, verbose: bool = False, DEBUG: bool = False) -> bool:
     """Checks if all questions in the constants file exist in the csv header
 
     Parameters
@@ -412,7 +427,7 @@ def questions_check(question_list: list) -> bool:
     return all_q_exist
 
 
-def school_name_reduce(school_name: str, other_school: str) -> str:
+def school_name_reduce(school_name: str, other_school: str, verbose: bool = False, DEBUG: bool = False) -> str:
     """For the fuzzy name logic, it's easier if the common text is removed from a school name. For example too many
     have "High School" in the name leading to higher fuzzy scores.
 
@@ -445,7 +460,7 @@ def school_name_reduce(school_name: str, other_school: str) -> str:
     return school_name
 
 
-def list_failures(student_list: list, student_type: str):
+def list_failures(student_list: list, student_type: str, verbose: bool = False, DEBUG: bool = False):
     """
 
     Parameters

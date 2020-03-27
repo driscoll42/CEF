@@ -8,10 +8,15 @@ name_compare - Implements name matching on two strings
 """
 
 import csv
+from datetime import datetime, timedelta
 from typing import Tuple
 
+import googlemaps
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
+
+from classes import Student
+from utils import keys as keys
 
 
 # Too much of the data is dirty often times, this function gets the first number in a string, and returns it
@@ -140,3 +145,44 @@ def name_compare(name1: str, name2: str) -> Tuple[bool, int]:
         return False, wratio
 
     return True, wratio
+
+
+def next_weekday(d, weekday):
+    days_ahead = weekday - d.weekday()
+    if days_ahead <= 0:  # Target day already happened this week
+        days_ahead += 7
+    new_date = d + timedelta(days_ahead)
+    new_date = datetime.strptime(str(new_date), "%Y-%m-%d")
+    new_date = new_date.replace(hour=7, minute=00)
+    return new_date
+
+
+def distance_between(s: Student) -> None:
+    # Documentation: https://googlemaps.github.io/google-maps-services-python/docs/index.html
+    # Source Code and Examples: https://github.com/googlemaps/google-maps-services-python
+
+    gmaps = googlemaps.Client(key=keys.google_api_key)
+
+    # Students probably have to arrive by 7. This forces us to have all students arriving the next Monday
+    arrive_time = next_weekday(datetime.now().date(), 0)
+    if s.cleaned_address2 is not None:
+        home_address = s.cleaned_address1 + ", " + s.cleaned_address2 + ", " + s.cleaned_city + ", " + s.cleaned_state + ", " + s.cleaned_zip_code
+    else:
+        home_address = s.cleaned_address1 + ", " + s.cleaned_city + ", " + s.cleaned_state + ", " + s.cleaned_zip_code
+
+    directions_result = gmaps.directions(home_address,
+                                         s.high_school_full,
+                                         mode="driving",  # mode="transit"
+                                         arrival_time=arrive_time,
+                                         # traffic_model='best_guess',
+                                         region="us")
+    s.home_to_school_dist = directions_result[0]['legs'][0]['distance']['text']
+    s.home_to_school_time_car = directions_result[0]['legs'][0]['duration']['text']
+
+    directions_result = gmaps.directions(home_address,
+                                         s.high_school_full,
+                                         mode="transit",
+                                         arrival_time=arrive_time,
+                                         # traffic_model='best_guess',
+                                         region="us")
+    s.home_to_school_time_pt = directions_result[0]['legs'][0]['duration']['text']

@@ -29,7 +29,7 @@ from utils import util
 # For example if FirstName = John and LastName = Doe, then student1 = DoeJohn
 # Currently it works if a reviewer has a z score, for all students, greater or less than 1/-1 for all test students
 #
-def get_reviewer_scores_normalized(file: str) -> dict:
+def get_reviewer_scores_normalized(file: str, verbose: bool = False, DEBUG: bool = False) -> dict:
     """This function takes in a file with all the reviews for all students and normalizes them. It does this based on
     the prerequisite that all reviewers have been assigned the same three students to review in addition to others.
     The program will compute the z-score for each reviewer and student combo for the three in question (how many
@@ -141,7 +141,7 @@ def get_reviewer_scores_normalized(file: str) -> dict:
     return reviewer_output
 
 
-def get_reviewer_scores(file: str) -> dict:
+def get_reviewer_scores(file: str, verbose: bool = False, DEBUG: bool = False) -> dict:
     """Returns the average score for each student in a dict
 
     Parameters
@@ -180,7 +180,9 @@ def get_reviewer_scores(file: str) -> dict:
     return reviewer_avg
 
 
-def generate_histo_arrays(file: str, SAT_to_ACT_dict: dict, SAT_to_ACT_Math_dict: dict) -> Tuple[dict, dict]:
+def generate_histo_arrays(file: str, SAT_to_ACT_dict: dict, SAT_to_ACT_Math_dict: dict, verbose: bool = False,
+                          DEBUG: bool = False) -> Tuple[
+    dict, dict]:
     """This function takes in a file with all student's ACT/SAT scores (Composite and Math) along with conversion dicts
     to convert SAT scores to ACT scores, and outputs two lists, with all the ACT (SAT's converted) and ACT Math scores
     in a list. This is used to generate histograms later on
@@ -238,7 +240,7 @@ def generate_histo_arrays(file: str, SAT_to_ACT_dict: dict, SAT_to_ACT_Math_dict
 # It's easier to work in terms of ACT score and to convert everything to the same scale
 # Source: https://www.act.org/content/dam/act/unsecured/documents/ACT-SAT-Concordance-Tables.pdf
 
-def ACT_SAT_Conv(s: Student, conv_dict: dict, test_type: str) -> int:
+def ACT_SAT_Conv(s: Student, conv_dict: dict, test_type: str, verbose: bool = False, DEBUG: bool = False) -> int:
     """Converts SAT scores to ACT scores
 
     Parameters
@@ -284,7 +286,8 @@ def ACT_SAT_Conv(s: Student, conv_dict: dict, test_type: str) -> int:
     return score
 
 
-def ACT_SAT_Calc(student: Student, conv_dict: dict, histogram: dict, test_type: str) -> None:
+def ACT_SAT_Calc(student: Student, conv_dict: dict, histogram: dict, test_type: str, verbose: bool = False,
+                 DEBUG: bool = False) -> None:
     """The scoring function for ACT and ACT Math. We multiply the percentile of their score by a total_score
 
     Parameters
@@ -316,12 +319,12 @@ def ACT_SAT_Calc(student: Student, conv_dict: dict, histogram: dict, test_type: 
         multiplier = round(histogram[ACT_SAT] / 100, 2)
 
     if test_type == 'C':
-        student.ACT_SAT_Score = multiplier * cs.ACT_Score
+        student.ACT_SAT_Score = round(multiplier * cs.ACT_Score, 2)
     elif test_type == 'M':
-        student.ACTM_SATM_Score = multiplier * cs.ACTM_Score
+        student.ACTM_SATM_Score = round(multiplier * cs.ACTM_Score, 2)
 
 
-def GPA_Calc(student: Student) -> None:
+def GPA_Calc(student: Student, verbose: bool = False, DEBUG: bool = False) -> None:
     """Calculates the number of points a student gets for their GPA. Any GPA scores over 4 are assumed to be out of 5,
     and any over 5 are assumed to be out of 6. These are then turned into 4.0 scores. AFter that, 2.91 is worth 1 point
     and every 0.10 is an extra point up to 10 points
@@ -346,11 +349,11 @@ def GPA_Calc(student: Student) -> None:
     student.GPA_Score = round(student.GPA_Score, 2)
 
 
-def score_coursework(s: Student) -> None:
+def score_coursework(s: Student, verbose: bool = False, DEBUG: bool = False) -> None:
     classes = class_split(s.STEM_Classes)
 
 
-def class_split(classes: str) -> list:
+def class_split(classes: str, verbose: bool = False, DEBUG: bool = False) -> list:
     """WIP: A function that cleans an input list of classes the student has taken
 
     Parameters
@@ -429,7 +432,7 @@ def class_split(classes: str) -> list:
     return class_list
 
 
-def COMMS_calc(value: float) -> int:
+def COMMS_calc(value: float, verbose: bool = False, DEBUG: bool = False) -> int:
     """Converts total community service hours into a score
 
     Parameters
