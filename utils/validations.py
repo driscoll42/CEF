@@ -51,8 +51,8 @@ def address_validation(s: Student, chicago_schools: list, school_list: dict, ver
     # Check address if residential or commercial and get cleaned up address
     if CALL_APIS:
         resident_validation(s, verbose, DEBUG)
-
-    s.address_type = 'Residential'
+    else:
+        s.address_type = 'Residential'
 
     if s.address_type == 'Residential' and s.city.upper() != 'CHICAGO':
         if s.high_school_full.upper().strip() not in chicago_schools:
@@ -60,23 +60,31 @@ def address_validation(s: Student, chicago_schools: list, school_list: dict, ver
             # This is an computationally EXPENSIVE operation, avoid as much as possible
             school_bool, school, school_score = util.name_compare_list(s.high_school_partial,
                                                                        school_list.keys(), 95)
+            # print(school_bool, school, school_score, s.high_school_partial, s.high_school_full)
             if school_bool:
-                s.high_school_full = school
+                s.high_school_full = school_list[school][1]
                 # print(s.high_school_full, ' - ', school, school_score, school_list[school], s.city)
                 # Trial and error has found 95 to be required to ONLY get correct matches, 90 works the vast majoriy, but some false positives get through
-                if school_list[school].upper() != 'CHICAGO':
+                if school_list[school][0].upper() != 'CHICAGO':
                     # print(orig_School, ' - ', school, school_score, school_list[school], s.city)
                     s.ChicagoSchool = False
+                    s.validationError = True
+
                     if verbose:
-                        print('WARNING: Student does neither lives nor goes to high school in Chicago', school)
+                        print('WARNING: Student does neither lives nor goes to high school in Chicago',
+                              s.high_school_full)
             else:
                 s.school_found = False
+                s.validationError = True
                 if verbose:
                     print('Could not find matching school in system')
                     print(s.high_school_full, ' - ', school, school_score, s.city)
+    if s.address_type != 'Residential':
+        s.valid_address = False
+        s.validationError = True
 
     if CALL_APIS:
-        util.distance_between(s)
+        util.distance_between(s, verbose)
 
 
 # Source: https://smartystreets.com/docs/sdk/python
@@ -145,6 +153,7 @@ def resident_validation(s: Student, verbose: bool = False, DEBUG: bool = False) 
         client.send_lookup(lookup)
     except exceptions.SmartyException as err:
         s.other_error = False
+        s.validationError = True
         s.other_error_message = s.other_error_message + ' - resident_validation failed with error: ' + err
 
     result = lookup.result
@@ -153,6 +162,7 @@ def resident_validation(s: Student, verbose: bool = False, DEBUG: bool = False) 
         if verbose:
             print("No candidates. This means the address is not valid.")
         s.valid_address = False
+        s.validationError = True
     else:
         first_candidate = result[0]
         s.address_type = first_candidate.metadata.rdi
@@ -161,6 +171,9 @@ def resident_validation(s: Student, verbose: bool = False, DEBUG: bool = False) 
         s.cleaned_address1 = first_candidate.delivery_line_1
         s.cleaned_address2 = first_candidate.delivery_line_2
         s.cleaned_city = first_candidate.components.city_name
+        if s.cleaned_city != 'Chicago':
+            s.ChicagoHome = False
+            s.validationError = True
         s.cleaned_state = first_candidate.components.state_abbreviation
         s.cleaned_zip_code = first_candidate.components.zipcode
         s.address_footnotes = first_candidate.analysis.footnotes
@@ -182,7 +195,7 @@ def past_recipient(s: Student, list_of_students: list, verbose: bool = False, DE
         True or False if the student is a past recipient or not
     """
     student_name = s.firstName + ' ' + s.lastName
-    compare_test, name, wratio = util.name_compare_list(student_name, list_of_students)
+    compare_test, name, wratio = util.name_compare_list(student_name, list_of_students, 90)
     if not compare_test:
         s.past_recipient = False
         s.validationError = True
@@ -276,6 +289,7 @@ def accred_check(s: Student, verbose: bool = False, DEBUG: bool = False) -> None
     major = major.replace('ENGINEERING', '')
     major_list = major.split(',')
 
+    # TODO: There has got to be a more efficient way to do this, probably a dict with a value being the majors in a list but for now it's not exactly slow
     for school in school_list:
         school = school.upper()
         school = school.strip()
@@ -302,39 +316,41 @@ def accred_check(s: Student, verbose: bool = False, DEBUG: bool = False) -> None
                 ABET_school = ABET_school.replace('-', '')
                 ABET_school = ABET_school.replace(' ', '')
                 if school in ABET_school:
+                    # print(school, major_list)
                     for option in major_list:
                         if option == ABET_major or option == 'UNDECIDED' or option == '':
                             return
 
-    for school in other_school_list:
-        school = school.upper()
-        school = school.strip()
-        school = school.replace('THE ', '')
-        school = school.replace(' AT ', ' - ')
-        school = school.replace('-', '')
-        school = school.replace(' ', '')
+    if s.Other_College is not None and len(s.Other_College) > 0:
+        for school in other_school_list:
+            school = school.upper()
+            school = school.strip()
+            school = school.replace('THE ', '')
+            school = school.replace(' AT ', ' - ')
+            school = school.replace('-', '')
+            school = school.replace(' ', '')
 
-        with open('School_Data/ABET_Accredited_Schools.csv', 'r', encoding="utf-8-sig") as f:
-            d_reader = csv.DictReader(f)
-            for line in d_reader:
-                ABET_major = line[cs.abet_major]
-                ABET_major = ABET_major.upper()
-                ABET_major = ABET_major.strip()
-                ABET_major = ABET_major.replace(' AND ', ',')
-                ABET_major = ABET_major.replace(' ', '')
-                ABET_major = ABET_major.replace('ENGINEERING', '')
+            with open('School_Data/ABET_Accredited_Schools.csv', 'r', encoding="utf-8-sig") as f:
+                d_reader = csv.DictReader(f)
+                for line in d_reader:
+                    ABET_major = line[cs.abet_major]
+                    ABET_major = ABET_major.upper()
+                    ABET_major = ABET_major.strip()
+                    ABET_major = ABET_major.replace(' AND ', ',')
+                    ABET_major = ABET_major.replace(' ', '')
+                    ABET_major = ABET_major.replace('ENGINEERING', '')
 
-                ABET_school = line[cs.abet_school_name]
-                ABET_school = ABET_school.upper()
-                ABET_school = ABET_school.strip()
-                ABET_school = ABET_school.replace('THE ', '')
-                ABET_school = ABET_school.replace(' AT ', ' - ')
-                ABET_school = ABET_school.replace('-', '')
-                ABET_school = ABET_school.replace(' ', '')
-                if school in ABET_school:
-                    for option in major_list:
-                        if option == ABET_major or option == 'UNDECIDED' or option == '':
-                            return
+                    ABET_school = line[cs.abet_school_name]
+                    ABET_school = ABET_school.upper()
+                    ABET_school = ABET_school.strip()
+                    ABET_school = ABET_school.replace('THE ', '')
+                    ABET_school = ABET_school.replace(' AT ', ' - ')
+                    ABET_school = ABET_school.replace('-', '')
+                    ABET_school = ABET_school.replace(' ', '')
+                    if school in ABET_school:
+                        for option in major_list:
+                            if option == ABET_major or option == 'UNDECIDED' or option == '':
+                                return
 
     s.accredited = False
 
@@ -394,9 +410,10 @@ def get_school_list(file: str, verbose: bool = False, DEBUG: bool = False) -> Tu
         for line in d_reader:
             # Far too many of the schools have the word school and others in them which makes a fuzzy match score too high
             orig_school_name = line['FacilityName']
+            full_school_name = line['FacilityNameFull']
             school_name = school_name_reduce(orig_school_name, '')
 
-            school_list[school_name] = line['City']
+            school_list[school_name] = [line['City'], full_school_name]
             if line['City'].upper() == 'CHICAGO':
                 chicago_schools.append(orig_school_name.upper().strip())
 
@@ -489,3 +506,4 @@ elif ACT_SAT_Score == -2:
     print(ACT_SAT_value, 'This score is too low for the SAT and too high for the ACT, check if correct')
 elif ACT_SAT_Score == -3:
     print(ACT_SAT_value, 'This score is too high for the SAT, check if correct')'''
+

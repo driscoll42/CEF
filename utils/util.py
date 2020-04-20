@@ -157,7 +157,7 @@ def next_weekday(d, weekday):
     return new_date
 
 
-def distance_between(s: Student) -> None:
+def distance_between(s: Student, verbose: bool = False) -> None:
     # Documentation: https://googlemaps.github.io/google-maps-services-python/docs/index.html
     # Source Code and Examples: https://github.com/googlemaps/google-maps-services-python
 
@@ -176,7 +176,9 @@ def distance_between(s: Student) -> None:
                                          arrival_time=arrive_time,
                                          # traffic_model='best_guess',
                                          region="us")
-    s.home_to_school_dist = directions_result[0]['legs'][0]['distance']['text']
+
+    s.home_to_school_dist = float(directions_result[0]['legs'][0]['distance']['text'].split()[0])
+    # TODO: Duration outputs like 1 hour 9 mins, make this like 1:09
     s.home_to_school_time_car = directions_result[0]['legs'][0]['duration']['text']
 
     directions_result = gmaps.directions(home_address,
@@ -186,3 +188,13 @@ def distance_between(s: Student) -> None:
                                          # traffic_model='best_guess',
                                          region="us")
     s.home_to_school_time_pt = directions_result[0]['legs'][0]['duration']['text']
+
+    # The maximum distance a student should travel is to IMSA from Chicago, which at the most is 64 miles, rounding
+    #   up to 70 to accomodate oddities
+    # Most likely this means the code is finding the wrong high school to compute distances, there are many "Washington
+    #   High School"s in the USA
+    if s.home_to_school_dist > 70:
+        s.distance_warn = False
+        s.validationError = True
+        if verbose:
+            print('WARNING: Student lives an unusually far distance away: ', s.home_to_school_dist, 'miles')

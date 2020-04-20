@@ -12,20 +12,19 @@ import pandas as pd
 
 import constants as cs
 from classes import Student
-from utils import validations as vali, scoring_util as sutil, util
+from utils import validations as vali, scoring_util as sutil, util, unittests
 
 
-# TODO: Make students who have each error
-# TODO: Overall error handling
-# TODO: Test cases for each error type and function   https://realpython.com/python-testing/
-
-# TODO: Replace all csvs with Google Spreadsheets https://www.twilio.tcom/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html https://automatetheboringstuff.com/2e/chapter14/
+# TODO: Output data to Google Spreadsheets https://www.twilio.tcom/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html https://automatetheboringstuff.com/2e/chapter14/
 # TODO: Coursework functionality
 # TODO: Extract csv from AwardSpring automatically - https://automatetheboringstuff.com/2e/chapter12/
 
 # TODO: Implement Sphnix
 # TODO: Move constants to Google Spreadsheet for non-dev user to update
+# TODO: Email notifications for warnings
+# TODO: Incremental changes
 
+# TODO: Detect changes and update Google Sheet rather than rerunning every time
 # TODO: Determine school quality
 # TODO: Check submission status, if they have not submitted but filled everything out, autowarn?
 # TODO: Make High School And College student subclass
@@ -61,7 +60,7 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
         headers = ['Total_Score', 'GPA_Score', 'ACTSAT_Score', 'ACTMSATM_Score', 'Reviewer_Score',
                    'home_to_school_dist', 'home_to_school_time_pt', 'home_to_school_time_car'] + d_reader.fieldnames
 
-        writer = csv.DictWriter(open('output.csv', 'w', newline=''), fieldnames=headers)
+        writer = csv.DictWriter(open('output.csv', 'w', newline='', encoding='utf-8-sig'), fieldnames=headers)
 
         writer.writeheader()
         # Load the conversions and lists into variables for reuse
@@ -79,8 +78,8 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
         cnt = 0
         for line in d_reader:
             cnt += 1
-            if cnt > 2:
-                break
+            # if cnt > 2:
+            #    break
             lastName = line[cs.questions['lastName']]
             firstName = line[cs.questions['firstName']]
 
@@ -108,9 +107,19 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
             s.city = line[cs.questions['city']]
             s.state = line[cs.questions['state']]
             s.zip_code = line[cs.questions['zip']]
+            if CALL_APIS is False:
+                s.cleaned_address1 = line[cs.questions['address1']]
+                s.cleaned_address2 = line[cs.questions['address2']]
+                s.cleaned_city = line[cs.questions['city']]
+                if s.cleaned_city != 'Chicago' and s.firstName == 'ChicagoSchoolNoCHome':
+                    s.ChicagoHome = False
+                    s.validationError = True
+                s.cleaned_state = line[cs.questions['state']]
+                s.cleaned_zip_code = line[cs.questions['zip']]
 
             # A basic saity check that if the GPA and ACT values are populated, then the applicant is probably applying
             if 1 == 1 and cs.high_schooler in s.student_type.upper() and s.GPA_Value and s.ACT_SAT_value and s.ACTM_SATM_value and s.COMMS_value:
+
                 # Validate the applicant's address is residential and that they live or go to high school in Chicago
                 vali.address_validation(s, chicago_schools, school_list, verbose, DEBUG, CALL_APIS)
 
@@ -136,17 +145,19 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
                     print(lastName + ', ' + firstName + ':', s.GPA_Score, s.ACT_SAT_Score, s.ACTM_SATM_Score,
                           s.reviewer_score)
 
-                # TODO: Write back to Excel File or Google Spreadsheets
                 # TODO: Send email with new students and warnings https://automatetheboringstuff.com/2e/chapter18/
 
                 # Write back to output csv file
                 total = s.GPA_Score + s.ACT_SAT_Score + s.ACTM_SATM_Score + s.reviewer_score
+
                 writer.writerow(dict(line, Total_Score=total, GPA_Score=s.GPA_Score, ACTSAT_Score=s.ACT_SAT_Score,
-                                     ACTMSATM_Score=s.ACTM_SATM_Score, Reviewer_Score=s.reviewer_score,
-                                     home_to_school_dist=s.home_to_school_dist,
-                                     home_to_school_time_pt=s.home_to_school_time_pt,
-                                     home_to_school_time_car=s.home_to_school_time_car))
+                                     ACTMSATM_Score=s.ACTM_SATM_Score, Reviewer_Score=s.reviewer_score
+                                     , home_to_school_dist=s.home_to_school_dist,
+                                     home_to_school_time_pt=s.home_to_school_time_pt
+                                     , home_to_school_time_car=s.home_to_school_time_car
+                                     ))
                 student_list.append(s)
+    return student_list
 
 
 def compute_C_scores(file: str, verbose: bool = False, DEBUG: bool = False, CALL_APIS: bool = False):
@@ -196,7 +207,8 @@ def compute_C_scores(file: str, verbose: bool = False, DEBUG: bool = False, CALL
 
                     # Validate that the recipient's college and major are still valid
                     vali.college_school_major(s, verbose, DEBUG)
-            college_students.append(s)
+                college_students.append(s)
+    return college_students
 
 
 def generate_student_data(file: str, verbose: bool = False, DEBUG: bool = False) -> Tuple[list, list]:
@@ -235,11 +247,12 @@ def main():
     The main function which runs the program
     """
     # TODO: Iterate through the students here once and pass student class to the two functions
-    run_test_data = True
-    run_all_data = False
+    run_test_data = False
+    run_all_data = True
     create_copy = False
 
     DEBUG = True
+    verbose = True
 
     # WARNING: If this is False it will call the Google and SmartyStreets API
     CALL_APIS = False
@@ -248,11 +261,14 @@ def main():
     if run_test_data:
         filename = 'Validation_Students.csv'
         student_data_time = time.time()
-        compute_HS_scores(filename, True, DEBUG, CALL_APIS)
+        validation_HS = compute_HS_scores(filename, verbose, DEBUG, CALL_APIS)
         HS_Run = time.time()
-        print('Runtime of HS: ' + str(HS_Run - student_data_time))
-        compute_C_scores(filename, True, DEBUG, CALL_APIS)
-        print('Runtime of College: ' + str(time.time() - HS_Run))
+        print('Runtime of HS Validation: ' + str(HS_Run - student_data_time))
+        unittests.unit_tests(validation_HS, CALL_APIS)
+        validation_C = compute_C_scores(filename, verbose, DEBUG, CALL_APIS)
+        print('Runtime of College Validation: ' + str(time.time() - HS_Run))
+        unittests.unit_tests(validation_C, CALL_APIS)
+        print('--------------')
 
     if run_all_data:
         filename = 'Student Answers for 2020 Incentive Awards.csv'
@@ -265,10 +281,10 @@ def main():
         # generate_student_data(filename)
         student_data_time = time.time()
         print('Runtime of student data split: ' + str(student_data_time - start))
-        compute_HS_scores(filename, True, DEBUG, CALL_APIS)
+        high_school_students = compute_HS_scores(filename, verbose, DEBUG, CALL_APIS)
         HS_Run = time.time()
         print('Runtime of HS: ' + str(HS_Run - student_data_time))
-        compute_C_scores(filename, True, DEBUG, CALL_APIS)
+        college_students = compute_C_scores(filename, verbose, DEBUG, CALL_APIS)
         print('Runtime of College: ' + str(time.time() - HS_Run))
 
 

@@ -31,7 +31,7 @@ See scoring_util ReadMe for technical details
 ## Awards Determination Features
 
 * Determine the quality of the school (WIP)
-* Determine distance between school and home address (WIP)
+* Determine distance between school and home address
 
 ## Automation Features
 
@@ -49,7 +49,12 @@ See scoring_util ReadMe for technical details
 
 * Implement Sphninx (WIP)
 * Add gitignore with emails and passwords, better secure them (WIP)
-* For next year award, make the ACT/SAT/GPA questions numeric (WIP)
+
+##  Changes for next year's award
+* Make the ACT/SAT/GPA questions numeric (WIP)
+* Ask students for the address of their school (too many have the same name) (WIP)
+* Reword the STEM classes question to ask for just all math and science classes
+* Make uploading the transcript more critical
 
 ## Long Term TODOs
 
