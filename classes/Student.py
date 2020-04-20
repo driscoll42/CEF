@@ -32,9 +32,9 @@ class Student:
         self.address_type = ''
         self.home_latitude = 0
         self.home_longitude = 0
-        self.home_to_school_dist = 0
-        self.home_to_school_time_pt = 0  # public transit
-        self.home_to_school_time_car = 0  # car
+        self.home_to_school_dist = 0.0
+        self.home_to_school_time_pt = 0.0  # public transit
+        self.home_to_school_time_car = 0.0  # car
 
         # Score fields
         self.GPA_Score = 0.0
@@ -45,8 +45,10 @@ class Student:
         # Validation Errors
         self.validationError = False
         self.valid_address = True
+        self.ChicagoHome = True
         self.ChicagoSchool = True
         self.school_found = True
+        self.distance_warn = True
         self.accredited = True
         self.valid_major = True
         self.past_recipient = True
