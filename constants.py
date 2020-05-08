@@ -90,6 +90,7 @@ max_SATM = 800
 ACT_Score = 10
 ACTM_Score = 15
 GPA_Score = 10
+STEM_Score = 15
 reviewer_multiplier = 0.5
 
 # Various functions check for student types

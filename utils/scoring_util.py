@@ -349,9 +349,13 @@ def GPA_Calc(student: Student, verbose: bool = False, DEBUG: bool = False) -> No
     student.GPA_Score = round(student.GPA_Score, 2)
 
 
-def score_coursework(s: Student, verbose: bool = False, DEBUG: bool = False) -> None:
+def score_coursework(s: Student, course_scores: dict, verbose: bool = False, DEBUG: bool = False) -> None:
     classes = class_split(s.STEM_Classes)
+    for c in classes:
+        if c != '':
+            s.STEM_Score += course_scores[c.upper()]
 
+    s.STEM_Score = min(cs.STEM_Score, cs.STEM_Score * s.STEM_Score / 40)
 
 def class_split(classes: str, verbose: bool = False, DEBUG: bool = False) -> list:
     """WIP: A function that cleans an input list of classes the student has taken
@@ -372,7 +376,11 @@ def class_split(classes: str, verbose: bool = False, DEBUG: bool = False) -> lis
     classes = classes.replace('w/', 'with')
     classes = classes.replace(' and ', ' & ')
     classes = classes.replace('Adv.', 'Advanced')
+    classes = classes.replace(' Adv ', ' Advanced ')
     classes = classes.replace('Trigonometry', 'Trig')
+    classes = classes.replace('precalculus', 'Pre-Calc')
+    classes = classes.replace('precalc', 'Pre-Calc')
+    classes = classes.replace('Calculus B/C', 'Calculus BC')
 
     classes = classes.replace('A.P.', 'AP')
     classes = classes.replace(' AP', ',AP')
@@ -403,6 +411,7 @@ def class_split(classes: str, verbose: bool = False, DEBUG: bool = False) -> lis
     classes = classes.replace(' I,', ' 1,')
     classes = classes.replace(' II ', ' 2 ')
     classes = classes.replace(' II,', ' 2,')
+    classes = classes.replace(' II/', ' 2/')
     classes = classes.replace(' III ', ' 3 ')
     classes = classes.replace(' III,', ' 3,')
     classes = classes.replace(' IV ', ' 4 ')
@@ -422,6 +431,8 @@ def class_split(classes: str, verbose: bool = False, DEBUG: bool = False) -> lis
     classes = classes.replace(',,', ',')
 
     class_list = classes.split(',')
+
+    class_list = [s.strip() for s in class_list]
 
     '''for x in classes:
         if

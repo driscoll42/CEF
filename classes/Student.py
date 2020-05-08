@@ -30,6 +30,7 @@ class Student:
         self.cleaned_zip_code = ''
         self.address_footnotes = ''
         self.address_type = ''
+        self.submitted = ''
         self.home_latitude = 0
         self.home_longitude = 0
         self.home_to_school_dist = 0.0
@@ -40,6 +41,7 @@ class Student:
         self.GPA_Score = 0.0
         self.ACT_SAT_Score = 0.0
         self.ACTM_SATM_Score = 0.0
+        self.STEM_Score = 0.0
         self.reviewer_score = 0.0
 
         # Validation Errors

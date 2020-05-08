@@ -60,6 +60,7 @@ See scoring_util ReadMe for technical details
 
 * Download student's ACT/SAT report and validate
 * Download student's transcript and scrape coursework off of it
+* Automate emails sending to students to remind them to finish application
 
 ## Install Instructions
 

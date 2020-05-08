@@ -49,7 +49,7 @@ def get_num(input_text: str) -> float:
         return float(list_of_nums[0])
 
 
-def conversion_dict(file_name: str) -> dict:
+def conversion_dict(file_name: str, type: str) -> dict:
     """This is basically VLOOKUP from Excel, for an input file it creates a dictionary where the first column is the
     key and the second column is the value. Currently assumes all values are integers
 
@@ -67,7 +67,7 @@ def conversion_dict(file_name: str) -> dict:
     # This function assumes your from value is in the first column of the csv and your to is in the second
     # Further it assumes the first column has not repeats
     # Also assumes that all the values in the table are integers
-    with open('Conversions/' + str(file_name), 'r', encoding="utf-8-sig") as f:
+    with open('dict_Data/' + str(file_name), 'r', encoding="utf-8-sig") as f:
         d_reader = csv.DictReader(f)
 
         # get fieldnames from DictReader object and store in dict
@@ -78,8 +78,10 @@ def conversion_dict(file_name: str) -> dict:
         conv_doc = {}
 
         for line in d_reader:
-            conv_doc[int(line[header_one])] = int(line[header_two])
-
+            if type == 'int':
+                conv_doc[int(line[header_one])] = int(line[header_two])
+            else:
+                conv_doc[line[header_one].upper()] = int(line[header_two])
     return conv_doc
 
 
@@ -170,26 +172,40 @@ def distance_between(s: Student, verbose: bool = False) -> None:
     else:
         home_address = s.cleaned_address1 + ", " + s.cleaned_city + ", " + s.cleaned_state + ", " + s.cleaned_zip_code
 
-    directions_result = gmaps.directions(home_address,
-                                         s.high_school_full,
-                                         mode="driving",  # mode="transit"
-                                         arrival_time=arrive_time,
-                                         # traffic_model='best_guess',
-                                         region="us")
+    # TODO: Get the real school address instead of just the school name
+    if s.high_school_full != 'Homeschooled':
+        try:
+            directions_result = gmaps.directions(home_address,
+                                                 s.high_school_full,
+                                                 mode="driving",  # mode="transit"
+                                                 arrival_time=arrive_time,
+                                                 # traffic_model='best_guess',
+                                                 region="us")
 
-    s.home_to_school_dist = float(directions_result[0]['legs'][0]['distance']['text'].split()[0])
-    # TODO: Duration outputs like 1 hour 9 mins, make this like 1:09
-    s.home_to_school_time_car = directions_result[0]['legs'][0]['duration']['text']
+            s.home_to_school_dist = float(directions_result[0]['legs'][0]['distance']['text'].split()[0])
+            # TODO: Duration outputs like 1 hour 9 mins, make this like 1:09
+            s.home_to_school_time_car = directions_result[0]['legs'][0]['duration']['text']
+        except:
+            print('Error getting Driving Directions for')
+            print(home_address, s.high_school_full)
 
-    directions_result = gmaps.directions(home_address,
-                                         s.high_school_full,
-                                         mode="transit",
-                                         arrival_time=arrive_time,
-                                         # traffic_model='best_guess',
-                                         region="us")
-    s.home_to_school_time_pt = directions_result[0]['legs'][0]['duration']['text']
+        try:
+            directions_result = gmaps.directions(home_address,
+                                                 s.high_school_full,
+                                                 mode="transit",
+                                                 arrival_time=arrive_time,
+                                                 # traffic_model='best_guess',
+                                                 region="us")
+            s.home_to_school_time_pt = directions_result[0]['legs'][0]['duration']['text']
+        except:
+            print('Error getting Transit Directions for')
+            print(home_address, s.high_school_full)
+    else:
+        s.home_to_school_dist = 'Homeschooled'
+        s.home_to_school_time_car = 'Homeschooled'
+        s.home_to_school_time_pt = 'Homeschooled'
 
-    # The maximum distance a student should travel is to IMSA from Chicago, which at the most is 64 miles, rounding
+        # The maximum distance a student should travel is to IMSA from Chicago, which at the most is 64 miles, rounding
     #   up to 70 to accomodate oddities
     # Most likely this means the code is finding the wrong high school to compute distances, there are many "Washington
     #   High School"s in the USA

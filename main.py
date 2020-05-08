@@ -35,6 +35,7 @@ from utils import validations as vali, scoring_util as sutil, util, unittests
 # TODO: Figure out how to handle the questions changing
 # TODO: Add gitignore with emails and passwords, better secure them
 # TODO: Package numpy, scipy
+# TODO: ACT/SAT Superscores
 
 def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CALL_APIS: bool = False):
     """The main function that computes the high school student's scores and validates their application
@@ -57,15 +58,16 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
             return
 
         # Adding leading columns for the scores the students recieved
-        headers = ['Total_Score', 'GPA_Score', 'ACTSAT_Score', 'ACTMSATM_Score', 'Reviewer_Score',
+        headers = ['Total_Score', 'GPA_Score', 'ACTSAT_Score', 'ACTMSATM_Score', 'STEM_Score', 'Reviewer_Score',
                    'home_to_school_dist', 'home_to_school_time_pt', 'home_to_school_time_car'] + d_reader.fieldnames
 
         writer = csv.DictWriter(open('output.csv', 'w', newline='', encoding='utf-8-sig'), fieldnames=headers)
 
         writer.writeheader()
         # Load the conversions and lists into variables for reuse
-        SAT_to_ACT_dict = util.conversion_dict('SAT_to_ACT.csv')
-        SAT_to_ACT_Math_dict = util.conversion_dict('SAT_to_ACT_Math.csv')
+        SAT_to_ACT_dict = util.conversion_dict('SAT_to_ACT.csv', 'int')
+        SAT_to_ACT_Math_dict = util.conversion_dict('SAT_to_ACT_Math.csv', 'int')
+        course_scores = util.conversion_dict('Course_scoring.csv', 'str')
         school_list, chicago_schools = vali.get_school_list('Illinois_Schools_Fix.csv')
 
         # Iterate through file once to get data for histograms
@@ -102,6 +104,8 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
             s.high_school_full = line[cs.questions['high_school']]
             s.high_school_other = line[cs.questions['high_school_other']]
 
+            s.submitted = line['General Application Submitted']
+
             s.address1 = line[cs.questions['address1']]
             s.address2 = line[cs.questions['address2']]
             s.city = line[cs.questions['city']]
@@ -117,9 +121,9 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
                 s.cleaned_state = line[cs.questions['state']]
                 s.cleaned_zip_code = line[cs.questions['zip']]
 
-            # A basic saity check that if the GPA and ACT values are populated, then the applicant is probably applying
-            if 1 == 1 and cs.high_schooler in s.student_type.upper() and s.GPA_Value and s.ACT_SAT_value and s.ACTM_SATM_value and s.COMMS_value:
-
+            # A basic sanity check that if the GPA and ACT values are populated, then the applicant is probably applying
+            if 1 == 1 and s.submitted == 'Yes' and cs.high_schooler in s.student_type.upper() and s.GPA_Value and s.ACT_SAT_value and s.ACTM_SATM_value and s.COMMS_value and s.firstName != 'Test':
+                # print(s.lastName, s.firstName)
                 # Validate the applicant's address is residential and that they live or go to high school in Chicago
                 vali.address_validation(s, chicago_schools, school_list, verbose, DEBUG, CALL_APIS)
 
@@ -132,7 +136,7 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
                 sutil.ACT_SAT_Calc(s, SAT_to_ACT_Math_dict, ACTM_Overall, 'M', verbose, DEBUG)
 
                 # Score the applicant's verbose
-                sutil.score_coursework(s, True)
+                sutil.score_coursework(s, course_scores, True)
 
                 # Determine the reviewer scores for the applicant
                 if lastName.strip().upper() + firstName.strip().upper() in reviewer_scores:
@@ -148,13 +152,18 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
                 # TODO: Send email with new students and warnings https://automatetheboringstuff.com/2e/chapter18/
 
                 # Write back to output csv file
-                total = s.GPA_Score + s.ACT_SAT_Score + s.ACTM_SATM_Score + s.reviewer_score
+                total = s.GPA_Score + s.ACT_SAT_Score + s.ACTM_SATM_Score + s.reviewer_score + s.STEM_Score
 
-                writer.writerow(dict(line, Total_Score=total, GPA_Score=s.GPA_Score, ACTSAT_Score=s.ACT_SAT_Score,
-                                     ACTMSATM_Score=s.ACTM_SATM_Score, Reviewer_Score=s.reviewer_score
-                                     , home_to_school_dist=s.home_to_school_dist,
-                                     home_to_school_time_pt=s.home_to_school_time_pt
-                                     , home_to_school_time_car=s.home_to_school_time_car
+                writer.writerow(dict(line,
+                                     Total_Score=total,
+                                     GPA_Score=s.GPA_Score,
+                                     ACTSAT_Score=s.ACT_SAT_Score,
+                                     ACTMSATM_Score=s.ACTM_SATM_Score,
+                                     STEM_Score=s.STEM_Score,
+                                     Reviewer_Score=s.reviewer_score,
+                                     home_to_school_dist=s.home_to_school_dist,
+                                     home_to_school_time_pt=s.home_to_school_time_pt,
+                                     home_to_school_time_car=s.home_to_school_time_car
                                      ))
                 student_list.append(s)
     return student_list
@@ -257,6 +266,8 @@ def main():
     # WARNING: If this is False it will call the Google and SmartyStreets API
     CALL_APIS = False
     # WARNING: If this is False it will call the Google and SmartyStreets API
+
+    # Wil need to remove Brewer	Dazerrick, Amar Johnson  address2
 
     if run_test_data:
         filename = 'Validation_Students.csv'

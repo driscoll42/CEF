@@ -54,31 +54,33 @@ def address_validation(s: Student, chicago_schools: list, school_list: dict, ver
     else:
         s.address_type = 'Residential'
 
-    if s.address_type == 'Residential' and s.city.upper() != 'CHICAGO':
-        if s.high_school_full.upper().strip() not in chicago_schools:
-            s.high_school_partial = school_name_reduce(s.high_school_full, s.high_school_other)
-            # This is an computationally EXPENSIVE operation, avoid as much as possible
-            school_bool, school, school_score = util.name_compare_list(s.high_school_partial,
-                                                                       school_list.keys(), 95)
-            # print(school_bool, school, school_score, s.high_school_partial, s.high_school_full)
-            if school_bool:
-                s.high_school_full = school_list[school][1]
-                # print(s.high_school_full, ' - ', school, school_score, school_list[school], s.city)
-                # Trial and error has found 95 to be required to ONLY get correct matches, 90 works the vast majoriy, but some false positives get through
-                if school_list[school][0].upper() != 'CHICAGO':
-                    # print(orig_School, ' - ', school, school_score, school_list[school], s.city)
-                    s.ChicagoSchool = False
-                    s.validationError = True
-
-                    if verbose:
-                        print('WARNING: Student does neither lives nor goes to high school in Chicago',
-                              s.high_school_full)
-            else:
-                s.school_found = False
+    # The school is needed for other calls, might as well always clean up
+    # if s.address_type == 'Residential' and s.city.upper() != 'CHICAGO':
+    if s.high_school_full.upper().strip() not in chicago_schools:
+        s.high_school_partial = school_name_reduce(s.high_school_full, s.high_school_other)
+        # This is an computationally EXPENSIVE operation, avoid as much as possible
+        school_bool, school, school_score = util.name_compare_list(s.high_school_partial,
+                                                                   school_list.keys(), 95)
+        # print(school_bool, school, school_score, s.high_school_partial, s.high_school_full)
+        if school_bool:
+            s.high_school_full = school_list[school][1]
+            # print(s.high_school_full, ' - ', school, school_score, school_list[school], s.city)
+            # Trial and error has found 95 to be required to ONLY get correct matches, 90 works the vast majoriy, but some false positives get through
+            if school_list[school][
+                0].upper() != 'CHICAGO' and s.address_type == 'Residential' and s.city.upper() != 'CHICAGO':
+                # print(orig_School, ' - ', school, school_score, school_list[school], s.city)
+                s.ChicagoSchool = False
                 s.validationError = True
+
                 if verbose:
-                    print('Could not find matching school in system')
-                    print(s.high_school_full, ' - ', school, school_score, s.city)
+                    print('WARNING: Student does neither lives nor goes to high school in Chicago',
+                          s.high_school_full)
+        else:
+            s.school_found = False
+            s.validationError = True
+            if verbose:
+                print('Could not find matching school in system')
+                print(s.high_school_full, ' - ', school, school_score, s.city, s.high_school_other)
     if s.address_type != 'Residential':
         s.valid_address = False
         s.validationError = True
