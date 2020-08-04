@@ -55,6 +55,8 @@ See scoring_util ReadMe for technical details
 * Ask students for the address of their school (too many have the same name) (WIP)
 * Reword the STEM classes question to ask for just all math and science classes
 * Make uploading the transcript more critical
+* Ask for extracurriculars
+* Ask for ACT/SAT Superscores
 
 ## Long Term TODOs
 

@@ -37,6 +37,9 @@ from utils import validations as vali, scoring_util as sutil, util, unittests
 # TODO: Package numpy, scipy
 # TODO: ACT/SAT Superscores
 
+# TODO: Have to care about Not Started REveiwers
+# TODO: Detect wide reviewer spread (lowest and highest is greater than 20? 25? points)
+
 def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CALL_APIS: bool = False):
     """The main function that computes the high school student's scores and validates their application
 
@@ -75,7 +78,7 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
 
         # TODO: Once live, use the normalized function
         # reviewer_scores = sutil.get_reviewer_scores_normalized('Reviewer Scores by Applicant for 2019 Incentive Awards.csv')
-        reviewer_scores = sutil.get_reviewer_scores('Reviewer Scores by Applicant for 2019 Incentive Awards.csv')
+        reviewer_scores = sutil.get_reviewer_scores('Reviewer Scores by Applicant for 2020 Incentive Awards.csv')
         student_list = []
         cnt = 0
         for line in d_reader:
@@ -104,7 +107,7 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
             s.high_school_full = line[cs.questions['high_school']]
             s.high_school_other = line[cs.questions['high_school_other']]
 
-            s.submitted = line['General Application Submitted']
+            # s.submitted = line['General Application Submitted']
 
             s.address1 = line[cs.questions['address1']]
             s.address2 = line[cs.questions['address2']]
@@ -122,7 +125,7 @@ def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CAL
                 s.cleaned_zip_code = line[cs.questions['zip']]
 
             # A basic sanity check that if the GPA and ACT values are populated, then the applicant is probably applying
-            if 1 == 1 and s.submitted == 'Yes' and cs.high_schooler in s.student_type.upper() and s.GPA_Value and s.ACT_SAT_value and s.ACTM_SATM_value and s.COMMS_value and s.firstName != 'Test':
+            if 1 == 1 and cs.high_schooler in s.student_type.upper() and s.GPA_Value and s.ACT_SAT_value and s.ACTM_SATM_value and s.firstName != 'Test':
                 # print(s.lastName, s.firstName)
                 # Validate the applicant's address is residential and that they live or go to high school in Chicago
                 vali.address_validation(s, chicago_schools, school_list, verbose, DEBUG, CALL_APIS)
@@ -263,9 +266,9 @@ def main():
     DEBUG = True
     verbose = True
 
-    # WARNING: If this is False it will call the Google and SmartyStreets API
+    # WARNING: If this is True it will call the Google and SmartyStreets API
     CALL_APIS = False
-    # WARNING: If this is False it will call the Google and SmartyStreets API
+    # WARNING: If this is True it will call the Google and SmartyStreets API
 
     # Wil need to remove Brewer	Dazerrick, Amar Johnson  address2
 
@@ -295,8 +298,8 @@ def main():
         high_school_students = compute_HS_scores(filename, verbose, DEBUG, CALL_APIS)
         HS_Run = time.time()
         print('Runtime of HS: ' + str(HS_Run - student_data_time))
-        college_students = compute_C_scores(filename, verbose, DEBUG, CALL_APIS)
-        print('Runtime of College: ' + str(time.time() - HS_Run))
+        # college_students = compute_C_scores(filename, verbose, DEBUG, CALL_APIS)
+        # print('Runtime of College: ' + str(time.time() - HS_Run))
 
 
 main()
