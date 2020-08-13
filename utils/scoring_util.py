@@ -163,19 +163,21 @@ def get_reviewer_scores(file: str, verbose: bool = False, DEBUG: bool = False) -
         for line in d_reader:
             lastName = line['StudentLastName']
             firstName = line['StudentFirstName']
+            ReviewStatus = line[cs.ReviewStatus]
             score = float(line['GivenScore'])
 
-            concat_name = lastName.strip().upper() + firstName.strip().upper()
-            if concat_name in student_cnt:
-                student_cnt[concat_name] = student_cnt[concat_name] + 1
-            else:
-                student_cnt[concat_name] = 1
+            if ReviewStatus == 'Complete':
+                concat_name = lastName.strip().upper() + firstName.strip().upper()
+                if concat_name in student_cnt:
+                    student_cnt[concat_name] = student_cnt[concat_name] + 1
+                else:
+                    student_cnt[concat_name] = 1
 
-            if concat_name in reviewer_avg:
-                reviewer_avg[concat_name] = reviewer_avg[concat_name] + (score - reviewer_avg[concat_name]) / \
-                                            student_cnt[concat_name]
-            else:
-                reviewer_avg[concat_name] = score
+                if concat_name in reviewer_avg:
+                    reviewer_avg[concat_name] = reviewer_avg[concat_name] + (score - reviewer_avg[concat_name]) / \
+                                                student_cnt[concat_name]
+                else:
+                    reviewer_avg[concat_name] = score
 
     return reviewer_avg
 

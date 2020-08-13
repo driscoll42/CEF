@@ -15,15 +15,20 @@ from classes import Student
 from utils import validations as vali, scoring_util as sutil, util, unittests
 
 
+# First ones to work on
+# TODO: Have to care about Not Started Reviewers
+# TODO: Add school address to spreadsheet
+# TODO: Detect wide reviewer spread (lowest and highest is greater than 20? 25? points)
+# TODO: If record doesn't write, throw up error
+
+# Backlog
 # TODO: Output data to Google Spreadsheets https://www.twilio.tcom/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html https://automatetheboringstuff.com/2e/chapter14/
 # TODO: Coursework functionality
 # TODO: Extract csv from AwardSpring automatically - https://automatetheboringstuff.com/2e/chapter12/
-
 # TODO: Implement Sphnix
 # TODO: Move constants to Google Spreadsheet for non-dev user to update
 # TODO: Email notifications for warnings
 # TODO: Incremental changes
-
 # TODO: Detect changes and update Google Sheet rather than rerunning every time
 # TODO: Determine school quality
 # TODO: Check submission status, if they have not submitted but filled everything out, autowarn?
@@ -36,9 +41,11 @@ from utils import validations as vali, scoring_util as sutil, util, unittests
 # TODO: Add gitignore with emails and passwords, better secure them
 # TODO: Package numpy, scipy
 # TODO: ACT/SAT Superscores
+# TODO: batchgeo autogen?
 
-# TODO: Have to care about Not Started REveiwers
-# TODO: Detect wide reviewer spread (lowest and highest is greater than 20? 25? points)
+# Changes to scholarship setup
+# TODO: SAT/ACT not number
+
 
 def compute_HS_scores(file: str, verbose: bool = False, DEBUG: bool = False, CALL_APIS: bool = False):
     """The main function that computes the high school student's scores and validates their application
