@@ -49,6 +49,31 @@ See scoring_util ReadMe for technical details
 
 * Implement Sphninx (WIP)
 * Add gitignore with emails and passwords, better secure them (WIP)
+* Add school address to spreadsheet
+* Detect wide reviewer spread (lowest and highest is greater than 20? 25? points) 
+* If record doesn't write, throw up error
+ * Output data to Google Spreadsheets https://www.twilio.tcom/blog/2017/02/an-easy-way-to-read-and-write-to-a-google-spreadsheet-in-python.html https://automatetheboringstuff.com/2e/chapter14/
+ * Coursework functionality
+ * Extract csv from AwardSpring automatically - https://automatetheboringstuff.com/2e/chapter12/ - https://realpython.com/python-web-scraping-practical-introduction/
+ * Implement Sphnix
+ * Move constants to Google Spreadsheet for non-dev user to update
+ * Email notifications for warnings
+ * Incremental changes
+ * Detect changes and update Google Sheet rather than rerunning every time
+ * Determine school quality
+ * Check submission status, if they have not submitted but filled everything out, autowarn?
+ * Make High School And College student subclass
+ * Store several variables as class variables https://realpython.com/inheritance-composition-python/
+ * Host this on an AWS server ? https://realpython.com/python-sql-libraries/
+ * Verify ACT/SAT from pdf https://pypi.org/project/pdftotext/
+ * Extract coursework from pdf https://pypi.org/project/pdftotext/
+ * Figure out how to handle the questions changing
+ * Add gitignore with emails and passwords, better secure them
+ * Package numpy, scipy
+ * ACT/SAT Superscores
+ * Ask for SAT II test scores?
+ * batchgeo autogen?
+
 
 ##  Changes for next year's award
 * Make the ACT/SAT/GPA questions numeric (WIP)
