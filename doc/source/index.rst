@@ -1,10 +1,8 @@
-.. CEF_Awards_Software documentation master file, created by
-sphinx-quickstart on Tue Feb 25 12:49:42 2020.
-You can adapt this file completely to your liking, but it should at least
-contain the root `toctree` directive.
-
 Welcome to CEF_Awards_Software's documentation!
 ===============================================
+
+.. automodule:: main
+    :members:
 
 .. toctree::
    :maxdepth: 2

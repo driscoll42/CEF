@@ -7,6 +7,8 @@ class Student:
         self.GPA_Value = 0.0
         self.ACT_SAT_value = 0.0
         self.ACTM_SATM_value = 0.0
+        self.ACT_value = 0.0
+        self.ACTM_value = 0.0
         self.COMMS_value = 0.0
         self.NON_ENG_value = ''
         self.student_type = ''
@@ -43,6 +45,11 @@ class Student:
         self.ACTM_SATM_Score = 0.0
         self.STEM_Score = 0.0
         self.reviewer_score = 0.0
+        self.comm_score = 0.0
+        self.essay_score = 0.0
+        self.career_score = 0.0
+        self.bonus_score = 0.0
+        self.notes = ''
 
         # Validation Errors
         self.validationError = False

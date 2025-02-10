@@ -50,7 +50,8 @@ def address_validation(s: Student, chicago_schools: list, school_list: dict, ver
     """
     # Check address if residential or commercial and get cleaned up address
     if CALL_APIS:
-        resident_validation(s, verbose, DEBUG)
+        pass
+        # resident_validation(s, verbose, DEBUG)
     else:
         s.address_type = 'Residential'
 
@@ -73,14 +74,14 @@ def address_validation(s: Student, chicago_schools: list, school_list: dict, ver
                 s.validationError = True
 
                 if verbose:
-                    print('WARNING: Student does neither lives nor goes to high school in Chicago',
-                          s.high_school_full)
+                    print(
+                        f'WARNING: Student does neither lives nor goes to high school in Chicago - {s.high_school_full}')
         else:
             s.school_found = False
             s.validationError = True
             if verbose:
                 print('Could not find matching school in system')
-                print(s.high_school_full, ' - ', school, school_score, s.city, s.high_school_other)
+                print(f'{s.high_school_full} - Student City: {s.city} - Student School{s.high_school_other}')
     if s.address_type != 'Residential':
         s.valid_address = False
         s.validationError = True
@@ -163,6 +164,7 @@ def resident_validation(s: Student, verbose: bool = False, DEBUG: bool = False) 
     if not result:
         if verbose:
             print("No candidates. This means the address is not valid.")
+            print(s.address1, s.address2, s.city, s.state, s.zip_code)
         s.valid_address = False
         s.validationError = True
     else:
@@ -362,7 +364,7 @@ def accred_check(s: Student, verbose: bool = False, DEBUG: bool = False) -> None
             print('Potential non-engineering major, check: ' + s.NON_ENG_value)
 
 
-def get_past_recipients(file: str, verbose: bool = False, DEBUG: bool = False) -> list:
+def get_past_recipients(file: str, year: int, verbose: bool = False, DEBUG: bool = False) -> list:
     """ A simple function to turn a file containing the list of past recipients of the award into a list
 
     Parameters
@@ -381,8 +383,8 @@ def get_past_recipients(file: str, verbose: bool = False, DEBUG: bool = False) -
         # get fieldnames from DictReader object and store in list
         d_reader = csv.DictReader(f)
         for line in d_reader:
-            lastName = line[cs.questions['lastName']]
-            firstName = line[cs.questions['firstName']]
+            lastName = line[cs.questions[year][0]['lastName']]
+            firstName = line[cs.questions[year][0]['firstName']]
             recipient_list.append(firstName.strip() + ' ' + lastName.strip())
     return recipient_list
 
@@ -422,7 +424,7 @@ def get_school_list(file: str, verbose: bool = False, DEBUG: bool = False) -> Tu
     return school_list, chicago_schools
 
 
-def questions_check(question_list: list, verbose: bool = False, DEBUG: bool = False) -> bool:
+def questions_check(question_list: list, year: int, verbose: bool = False, DEBUG: bool = False) -> bool:
     """Checks if all questions in the constants file exist in the csv header
 
     Parameters
@@ -437,7 +439,8 @@ def questions_check(question_list: list, verbose: bool = False, DEBUG: bool = Fa
 
     """
     all_q_exist = True
-    for q in cs.questions.values():
+    for q in cs.questions[year][0].values():
+
         if q not in question_list:
             print('ERROR: The following question is not in the headers, check for typos: ' + str(q))
             all_q_exist = False

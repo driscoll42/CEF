@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from typing import Tuple
 
 import googlemaps
+import pandas as pd
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 
@@ -79,9 +80,9 @@ def conversion_dict(file_name: str, type: str) -> dict:
 
         for line in d_reader:
             if type == 'int':
-                conv_doc[int(line[header_one])] = int(line[header_two])
+                conv_doc[int(line[header_one])] = float(line[header_two])
             else:
-                conv_doc[line[header_one].upper()] = int(line[header_two])
+                conv_doc[line[header_one].upper()] = float(line[header_two])
     return conv_doc
 
 
@@ -185,9 +186,18 @@ def distance_between(s: Student, verbose: bool = False) -> None:
             s.home_to_school_dist = float(directions_result[0]['legs'][0]['distance']['text'].split()[0])
             # TODO: Duration outputs like 1 hour 9 mins, make this like 1:09
             s.home_to_school_time_car = directions_result[0]['legs'][0]['duration']['text']
-        except:
+            split_string = s.home_to_school_time_car.split()
+            for string, i in enumerate(split_string):
+                num_store = 0
+                if i % 2 == 0:
+                    num_store = int(string)
+                else:
+                    pass
+
+        except Exception as e:
             print('Error getting Driving Directions for')
             print(home_address, s.high_school_full)
+            print(e)
 
         try:
             directions_result = gmaps.directions(home_address,
@@ -197,9 +207,11 @@ def distance_between(s: Student, verbose: bool = False) -> None:
                                                  # traffic_model='best_guess',
                                                  region="us")
             s.home_to_school_time_pt = directions_result[0]['legs'][0]['duration']['text']
-        except:
+        except Exception as e:
             print('Error getting Transit Directions for')
-            print(home_address, s.high_school_full)
+            print('Home Address', home_address)
+            print('School Address', s.high_school_full)
+            print(e)
     else:
         s.home_to_school_dist = 'Homeschooled'
         s.home_to_school_time_car = 'Homeschooled'
@@ -214,3 +226,17 @@ def distance_between(s: Student, verbose: bool = False) -> None:
         s.validationError = True
         if verbose:
             print('WARNING: Student lives an unusually far distance away: ', s.home_to_school_dist, 'miles')
+            print('Home Address', home_address)
+            print('School Address', s.high_school_full)
+
+
+def get_review_feedback(file_name):
+    reviewer_df = pd.read_excel(f'Student_Data/{file_name}')
+    agg_rev_df = reviewer_df.fillna('').groupby(['Applicant']).agg({'Community Service / Work'  : ['mean'],
+                                                                    'Short Essay'               : ['mean'],
+                                                                    'Bonus/Discretionary Points': ['mean'],
+                                                                    'Notes'                     : [
+                                                                        ' || '.join]}).reset_index()
+    agg_rev_df.columns = ['_'.join(col) for col in agg_rev_df.columns]
+
+    return agg_rev_df
